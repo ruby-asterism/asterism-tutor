@@ -99,10 +99,12 @@ module Tutor
     end
 
     # The document with the comment lines above line n (1-based), indented like
-    # that line (a line past the end: at the end).
+    # that line (a line past the end: at the end). A document whose last line
+    # has no newline (what the device's editor sends) keeps it that way: the
+    # newline is added only when a comment goes after that line.
     def insert_comment(src, n, lines)
       all = src.lines
-      all[-1] += "\n" if all.any? && !all[-1].end_with?("\n")
+      all[-1] += "\n" if all.any? && !all[-1].end_with?("\n") && n > all.size
       target = all[n - 1] || ""
       indent = target[/\A[ \t]*/]
       all.insert(n - 1, *lines.map { "#{indent}#{_1}\n" })

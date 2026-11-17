@@ -70,6 +70,8 @@ module Tutor
     #   [[heredoc]]        hint: points into the heredoc of the document
     #   [[far]]            hint: points past the end of the document
     #   [[slow]]           waits 1.5 s first
+    #   [[wait N]]         waits N seconds first (up to 120; for trying a
+    #                      device by hand: edit, kill the app, stop the gem)
     #   [[noapp]]          make: code without a FmrbApp class every time
     class Fake
       attr_reader :calls
@@ -85,6 +87,9 @@ module Tutor
         first_req = messages.reverse.find { _1[:role] == "user" && _1[:content].to_s.include?("<child>") }[:content].to_s
         child = first_req[%r{<child>\n(.*?)\n</child>}m, 1].to_s
         sleep 1.5 if child.include?("[[slow]]")
+        if (secs = child[/\[\[wait (\d+)\]\]/, 1])
+          sleep [secs.to_i, 120].min
+        end
         history_turns = (messages.index { _1[:content].to_s.equal?(first_req) } || 0) / 2
         attempt = meta[:attempt].to_i
         text = answer(meta[:mode], child, first_req, attempt, history_turns, last)

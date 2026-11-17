@@ -120,4 +120,13 @@ class TestParts < Minitest::Test
     usd = c.cost({ "in" => 1_000_000, "out" => 1_000_000, "cache_write" => 0, "cache_read" => 0 })
     assert_in_delta 0.60, usd, 1e-9 # claude-haiku-5-5: 0.10 + 0.50
   end
+
+  def test_fake_waits_for_the_marker
+    llm = Tutor::LLM::Fake.new
+    msg = Tutor::Prompt.request({ "mode" => "ask", "text" => "[[wait 1]] 待って" }, nil)
+    t0 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    r = llm.complete(system: "s", messages: [{ role: "user", content: msg }], meta: { mode: "ask" })
+    assert_operator Process.clock_gettime(Process::CLOCK_MONOTONIC) - t0, :>=, 0.9
+    assert_includes r["text"], "<explain>"
+  end
 end

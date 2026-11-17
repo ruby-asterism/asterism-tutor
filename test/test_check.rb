@@ -185,6 +185,17 @@ class TestCheck < Minitest::Test
     assert C.comment_lines("x" * 300)[0].length < 140
   end
 
+  # The device's editor sends its document without a newline at the end.
+  def test_document_without_a_final_newline
+    src = "class A < FmrbApp\n  MSG = <<~T\n    hi\n  T\n  def on_create\n    x = 1\n  end\nend"
+    out = C.place_hints(src, [{ "line" => 1, "comment" => "top" }, { "line" => 8, "comment" => "last" },
+                              { "line" => 3, "comment" => "in the heredoc" }])
+    assert_equal [1, 2, 8], out["placed"].map { _1["at"] }.sort   # the heredoc's moves above it
+    assert_empty out["left_out"]
+    refute out["doc"].end_with?("\n")
+    assert_equal src, C.strip_ai(out["doc"])
+  end
+
   def test_indent_follows_the_line
     out = C.place_hints("def f\n  x = 1\nend\n", [{ "line" => 2, "comment" => "set x" }])
     assert_equal "def f\n  # AI: set x\n  x = 1\nend\n", out["doc"]
