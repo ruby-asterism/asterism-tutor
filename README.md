@@ -63,7 +63,7 @@ ANTHROPIC_API_KEY="$(cat path/to/anthropic_api_key)" bundle exec exe/fmrb-tutor 
 |---|---|---|
 | `network.devices` | `["*"]` | 受け付ける端末のノード ID。`*` は全部 (開発用)。素の TCP のルータでは名乗りにすぎない (取り違え防止)。拘束力は mTLS のルータの ACL で持たせる |
 | `llm.provider` | `fake` | `fake` (偽物。試験用) か `anthropic` |
-| `llm.model` | `claude-haiku-5-5` | `claude-sonnet-5-5` も選べる。単価は `llm.prices` |
+| `llm.model` | `claude-sonnet-5-5` | `claude-haiku-5-5` も選べる (安い)。単価は `llm.prices` |
 | `limits.per_device_per_day` | 50 | 端末ごとの 1 日の回数。超えると理由を返す |
 | `limits.cost_per_day_usd` | 1.0 | 全端末の 1 日の費用 (usage からの見積もり)。超えると理由を返す |
 | `limits.retries` | 2 | 検査に落ちたコードを LLM に直させる回数 |

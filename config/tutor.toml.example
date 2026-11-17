@@ -11,7 +11,7 @@ name = "AI helper"                 # the name the device shows
 
 [llm]
 provider = "fake"                  # "fake" (no LLM, for tests) or "anthropic"
-model = "claude-haiku-5-5"         # or "claude-sonnet-5-5"
+model = "claude-sonnet-5-5"        # or "claude-haiku-5-5" (cheaper)
 max_tokens = 8000
 effort = ""                        # "", "low", "medium", "high" ("" = the model's default)
 timeout_s = 120

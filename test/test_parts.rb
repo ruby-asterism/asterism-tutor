@@ -118,7 +118,7 @@ class TestParts < Minitest::Test
   def test_cost
     c = cfg
     usd = c.cost({ "in" => 1_000_000, "out" => 1_000_000, "cache_write" => 0, "cache_read" => 0 })
-    assert_in_delta 0.60, usd, 1e-9 # claude-haiku-5-5: 0.10 + 0.50
+    assert_in_delta 12.0, usd, 1e-9 # claude-sonnet-5-5: 2.0 + 10.0
   end
 
   def test_fake_waits_for_the_marker
