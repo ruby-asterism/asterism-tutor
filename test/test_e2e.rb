@@ -1,6 +1,7 @@
 require_relative "test_helper"
 require "asterism"
 require "open3"
+require "fileutils"
 require_relative "sender"
 
 # The gem as a process (exe/fmrb-tutor, fake LLM) on a local router, called
@@ -96,6 +97,7 @@ class TestE2E < Minitest::Test
       @nets.each_value { _1.close rescue nil }
       @servers.each { Process.kill("TERM", _1.pid) rescue nil }
       @servers.each { _1.join(10) }
+      FileUtils.rm_rf(WORK) if ENV["KEEP_LOGS"].to_s.empty?
     end
   end
 

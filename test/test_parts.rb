@@ -1,4 +1,5 @@
 require_relative "test_helper"
+require "fileutils"
 
 # The pieces without the network: the answer's tags, the bundles, the talk,
 # the limits and the log.
@@ -48,8 +49,11 @@ class TestParts < Minitest::Test
     assert_equal b.text, Tutor::Bundle.new(ROOT, "3.1.0").text # the same bytes each time (the prompt cache)
   end
 
+  TMP = Dir.mktmpdir("fmrb-tutor-unit")
+  Minitest.after_run { FileUtils.rm_rf(TMP) }
+
   def cfg(over = {})
-    Tutor::Config.load(nil, Tutor::Config.deep_merge({ "store" => { "log_dir" => Dir.mktmpdir } }, over))
+    Tutor::Config.load(nil, Tutor::Config.deep_merge({ "store" => { "log_dir" => Dir.mktmpdir(nil, TMP) } }, over))
   end
 
   def test_talk_keeps_turns_and_forgets
