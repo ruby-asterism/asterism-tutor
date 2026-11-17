@@ -1,0 +1,71 @@
+# id	what	app VM (ng: missing or does not compile, differs: runs but gives another answer)
+regexp_literal	Regexp literal and =~	ng
+regexp_class	Regexp.new / match?	ng
+pattern_hash_rest	in {a:, **rest}	differs
+pattern_pin_block	^pin of an outer local inside a block	differs
+pattern_pin_expr	^(expression)	differs
+pattern_const_pattern	Const[...] checks the constant	differs
+module_name	Module#name	ng
+struct	Struct.new	ng
+data_define	Data.define	ng
+set	Set without require	ng
+protected_method	protected method callable from same class	ng
+method_object	method(:x).call and arity	ng
+class_eval_string	class_eval with a string	ng
+instance_exec	instance_exec with an argument	ng
+kernel_proc	Kernel#proc	ng
+curry	Proc#curry	ng
+exception_cause	Exception#cause	ng
+catch_throw	catch / throw	ng
+rescue_modifier_bang	$! in a rescue modifier	ng
+string_literal_magic_frozen	frozen_string_literal magic comment	differs
+string_b	String#b and encoding	ng
+string_force_encoding	force_encoding	ng
+string_scan_regexp	scan with a regexp	ng
+string_inspect_escape	inspect of control and non-ASCII	differs
+integer_bignum	2**64 (arbitrary precision)	ng
+nil_to_i	nil.to_i	ng
+nil_to_a	nil.to_a	ng
+rational	Rational literal 1r / 3	ng
+complex	Complex literal 1 + 2i	ng
+integer_digits	Integer#digits	ng
+integer_pow_mod	Integer#pow(b, mod)	ng
+integer_bit_length	Integer#bit_length	ng
+integer_clamp	Comparable#clamp on Integer	ng
+hash_transform_values	Hash#transform_values	ng
+hash_dig	Hash#dig	ng
+hash_compare_by_identity	compare_by_identity	ng
+hash_count	Hash#count with a block	ng
+hash_min_by	Hash#min_by	ng
+hash_sum	Hash#sum with a block	ng
+array_each_slice	each_slice	ng
+array_each_cons	each_cons	ng
+array_tally	tally	ng
+array_filter_map	filter_map	ng
+array_sum	Array#sum	ng
+array_minmax	minmax	ng
+array_zip	zip	ng
+array_flat_map	flat_map	ng
+array_group_by	group_by	ng
+array_sort_by	sort_by	ng
+array_cycle	cycle.first(n)	ng
+range_step	Integer#step(to, by).to_a	ng
+range_endless	endless range (5..).first(2)	ng
+range_sum	Range#sum	ng
+enumerator_next	external enumerator next / StopIteration	ng
+enumerator_lazy	lazy.map.select.first	ng
+enumerator_new	Enumerator.new with a yielder	ng
+fiber	Fiber.new / resume / yield	ng
+thread	Thread.new.value	ng
+mutex	Mutex#synchronize	ng
+process_clock	Process.clock_gettime(MONOTONIC)	ng
+kernel_rand	rand(10) and Random.new(1)	ng
+object_then	then	ng
+object_tap	tap	ng
+object_itself	itself	ng
+recursion_1000	Ruby recursion 1000 deep	ng
+skill_defined	defined? is not there	ng
+skill_binread	File.binread is not there (File.open(path, "rb") and read)	ng
+skill_pack	Array#pack is not there ("\x00" * n with setbyte / getbyte)	ng
+skill_multi_index	a[i], a[j] = a[j], a[i] (array elements on the left of a multiple assignment) breaks; use a temporary	differs
+codegen_begin_end	BEGIN {} / END {}, flip-flops and alias of globals do not compile	ng

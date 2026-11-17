@@ -1,0 +1,29 @@
+#!/usr/bin/env ruby
+# Starts the AI helper as an Asterism application.
+#
+#   fmrb-tutor [--config tutor.toml] [--router tcp/127.0.0.1:7447] [--node tutor] [--llm fake|anthropic]
+#
+# The LLM key is read from the environment (ANTHROPIC_API_KEY) only.
+require "optparse"
+require_relative "../lib/tutor"
+
+path = nil
+over = {}
+OptionParser.new do |o|
+  o.banner = "usage: fmrb-tutor [options]"
+  o.on("--config FILE", "settings (TOML)") { path = _1 }
+  o.on("--router LOCATOR", "the Asterism router, e.g. tcp/127.0.0.1:7447") { (over["network"] ||= {})["router"] = _1 }
+  o.on("--node ID", "this node's ID (default tutor)") { (over["network"] ||= {})["node"] = _1 }
+  o.on("--llm PROVIDER", "fake or anthropic") { (over["llm"] ||= {})["provider"] = _1 }
+  o.on("--log-dir DIR", "where the JSONL records go") { (over["store"] ||= {})["log_dir"] = _1 }
+end.parse!
+
+cfg = Tutor::Config.load(path, over)
+trap("TERM") { Thread.main.raise(Interrupt) }
+begin
+  Tutor::Server.new(cfg).run
+rescue Interrupt
+  nil
+rescue Tutor::LLM::Error => e
+  abort("fmrb-tutor: #{e.message}")
+end

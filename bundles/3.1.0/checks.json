@@ -1,0 +1,412 @@
+{
+  "fw": "3.1.0",
+  "checks": [
+    {
+      "id": "regexp_literal",
+      "what": "Regexp literal and =~",
+      "status": "ng",
+      "nodes": [
+        "RegularExpressionNode",
+        "InterpolatedRegularExpressionNode",
+        "MatchLastLineNode",
+        "InterpolatedMatchLastLineNode",
+        "MatchWriteNode"
+      ]
+    },
+    {
+      "id": "regexp_class",
+      "what": "Regexp.new / match?",
+      "status": "ng",
+      "consts": [
+        "Regexp",
+        "MatchData"
+      ]
+    },
+    {
+      "id": "struct",
+      "what": "Struct.new",
+      "status": "ng",
+      "consts": [
+        "Struct"
+      ]
+    },
+    {
+      "id": "data_define",
+      "what": "Data.define",
+      "status": "ng",
+      "consts": [
+        "Data"
+      ]
+    },
+    {
+      "id": "set",
+      "what": "Set without require",
+      "status": "ng",
+      "consts": [
+        "Set"
+      ]
+    },
+    {
+      "id": "protected_method",
+      "what": "protected method callable from same class",
+      "status": "ng",
+      "calls0": [
+        "protected"
+      ]
+    },
+    {
+      "id": "method_object",
+      "what": "method(:x).call and arity",
+      "status": "ng",
+      "calls0": [
+        "method"
+      ]
+    },
+    {
+      "id": "instance_exec",
+      "what": "instance_exec with an argument",
+      "status": "ng",
+      "calls": [
+        "instance_exec"
+      ]
+    },
+    {
+      "id": "kernel_proc",
+      "what": "Kernel#proc",
+      "status": "ng",
+      "calls0": [
+        "proc"
+      ]
+    },
+    {
+      "id": "curry",
+      "what": "Proc#curry",
+      "status": "ng",
+      "calls": [
+        "curry"
+      ]
+    },
+    {
+      "id": "catch_throw",
+      "what": "catch / throw",
+      "status": "ng",
+      "calls0": [
+        "catch",
+        "throw"
+      ]
+    },
+    {
+      "id": "string_force_encoding",
+      "what": "force_encoding",
+      "status": "ng",
+      "calls": [
+        "force_encoding",
+        "encode"
+      ]
+    },
+    {
+      "id": "rational",
+      "what": "Rational literal 1r / 3",
+      "status": "ng",
+      "nodes": [
+        "RationalNode"
+      ],
+      "consts": [
+        "Rational"
+      ]
+    },
+    {
+      "id": "complex",
+      "what": "Complex literal 1 + 2i",
+      "status": "ng",
+      "nodes": [
+        "ImaginaryNode"
+      ],
+      "consts": [
+        "Complex"
+      ]
+    },
+    {
+      "id": "integer_digits",
+      "what": "Integer#digits",
+      "status": "ng",
+      "calls": [
+        "digits"
+      ]
+    },
+    {
+      "id": "integer_bit_length",
+      "what": "Integer#bit_length",
+      "status": "ng",
+      "calls": [
+        "bit_length"
+      ]
+    },
+    {
+      "id": "integer_clamp",
+      "what": "Comparable#clamp on Integer",
+      "status": "ng",
+      "calls": [
+        "clamp"
+      ]
+    },
+    {
+      "id": "hash_transform_values",
+      "what": "Hash#transform_values",
+      "status": "ng",
+      "calls": [
+        "transform_values",
+        "transform_keys"
+      ]
+    },
+    {
+      "id": "hash_dig",
+      "what": "Hash#dig",
+      "status": "ng",
+      "calls": [
+        "dig"
+      ]
+    },
+    {
+      "id": "hash_compare_by_identity",
+      "what": "compare_by_identity",
+      "status": "ng",
+      "calls": [
+        "compare_by_identity"
+      ]
+    },
+    {
+      "id": "hash_min_by",
+      "what": "Hash#min_by",
+      "status": "ng",
+      "calls": [
+        "min_by",
+        "max_by"
+      ]
+    },
+    {
+      "id": "array_each_slice",
+      "what": "each_slice",
+      "status": "ng",
+      "calls": [
+        "each_slice"
+      ]
+    },
+    {
+      "id": "array_each_cons",
+      "what": "each_cons",
+      "status": "ng",
+      "calls": [
+        "each_cons"
+      ]
+    },
+    {
+      "id": "array_tally",
+      "what": "tally",
+      "status": "ng",
+      "calls": [
+        "tally"
+      ]
+    },
+    {
+      "id": "array_filter_map",
+      "what": "filter_map",
+      "status": "ng",
+      "calls": [
+        "filter_map"
+      ]
+    },
+    {
+      "id": "array_sum",
+      "what": "Array#sum",
+      "status": "ng",
+      "calls": [
+        "sum"
+      ]
+    },
+    {
+      "id": "array_minmax",
+      "what": "minmax",
+      "status": "ng",
+      "calls": [
+        "minmax"
+      ]
+    },
+    {
+      "id": "array_zip",
+      "what": "zip",
+      "status": "ng",
+      "calls": [
+        "zip"
+      ]
+    },
+    {
+      "id": "array_flat_map",
+      "what": "flat_map",
+      "status": "ng",
+      "calls": [
+        "flat_map"
+      ]
+    },
+    {
+      "id": "array_group_by",
+      "what": "group_by",
+      "status": "ng",
+      "calls": [
+        "group_by"
+      ]
+    },
+    {
+      "id": "array_sort_by",
+      "what": "sort_by",
+      "status": "ng",
+      "calls": [
+        "sort_by"
+      ]
+    },
+    {
+      "id": "array_cycle",
+      "what": "cycle.first(n)",
+      "status": "ng",
+      "calls": [
+        "cycle"
+      ]
+    },
+    {
+      "id": "range_step",
+      "what": "Integer#step(to, by).to_a",
+      "status": "ng",
+      "calls": [
+        "step"
+      ]
+    },
+    {
+      "id": "range_endless",
+      "what": "endless range (5..).first(2)",
+      "status": "ng",
+      "endless_range": true
+    },
+    {
+      "id": "enumerator_lazy",
+      "what": "lazy.map.select.first",
+      "status": "ng",
+      "calls": [
+        "lazy"
+      ]
+    },
+    {
+      "id": "enumerator_new",
+      "what": "Enumerator.new with a yielder",
+      "status": "ng",
+      "consts": [
+        "Enumerator"
+      ]
+    },
+    {
+      "id": "fiber",
+      "what": "Fiber.new / resume / yield",
+      "status": "ng",
+      "consts": [
+        "Fiber"
+      ]
+    },
+    {
+      "id": "thread",
+      "what": "Thread.new.value",
+      "status": "ng",
+      "consts": [
+        "Thread"
+      ]
+    },
+    {
+      "id": "mutex",
+      "what": "Mutex#synchronize",
+      "status": "ng",
+      "consts": [
+        "Mutex"
+      ]
+    },
+    {
+      "id": "process_clock",
+      "what": "Process.clock_gettime(MONOTONIC)",
+      "status": "ng",
+      "consts": [
+        "Process"
+      ]
+    },
+    {
+      "id": "kernel_rand",
+      "what": "rand(10) and Random.new(1)",
+      "status": "ng",
+      "consts": [
+        "Random"
+      ]
+    },
+    {
+      "id": "object_then",
+      "what": "then",
+      "status": "ng",
+      "calls": [
+        "then",
+        "yield_self"
+      ]
+    },
+    {
+      "id": "object_tap",
+      "what": "tap",
+      "status": "ng",
+      "calls": [
+        "tap"
+      ]
+    },
+    {
+      "id": "object_itself",
+      "what": "itself",
+      "status": "ng",
+      "calls": [
+        "itself"
+      ]
+    },
+    {
+      "id": "skill_defined",
+      "what": "defined? is not there",
+      "status": "ng",
+      "nodes": [
+        "DefinedNode"
+      ]
+    },
+    {
+      "id": "skill_binread",
+      "what": "File.binread is not there (File.open(path, \"rb\") and read)",
+      "status": "ng",
+      "calls": [
+        "binread"
+      ]
+    },
+    {
+      "id": "skill_pack",
+      "what": "Array#pack is not there (\"\\x00\" * n with setbyte / getbyte)",
+      "status": "ng",
+      "calls": [
+        "pack"
+      ]
+    },
+    {
+      "id": "skill_multi_index",
+      "what": "a[i], a[j] = a[j], a[i] (array elements on the left of a multiple assignment) breaks; use a temporary",
+      "status": "differs",
+      "multi_index": true
+    },
+    {
+      "id": "codegen_begin_end",
+      "what": "BEGIN {} / END {}, flip-flops and alias of globals do not compile",
+      "status": "ng",
+      "nodes": [
+        "PreExecutionNode",
+        "PostExecutionNode",
+        "FlipFlopNode",
+        "AliasGlobalVariableNode"
+      ]
+    }
+  ]
+}

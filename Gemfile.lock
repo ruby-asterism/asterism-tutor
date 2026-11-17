@@ -1,0 +1,68 @@
+PATH
+  remote: .
+  specs:
+    fmrb-tutor (0.1.0)
+      anthropic (~> 1.80.0)
+      asterism (>= 0.14)
+      msgpack (~> 1.7)
+      prism (= 1.9.0)
+      tomlrb (~> 2.0)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    anthropic (1.80.0)
+      base64 (~> 0.1)
+      connection_pool (>= 2, < 4)
+      opentelemetry-api (>= 1.2.4, < 2)
+      standardwebhooks (~> 1.0)
+    asterism (0.14.0)
+      asterism-zenoh (~> 0.4, >= 0.4.1)
+      msgpack (~> 1.7)
+    asterism-zenoh (0.4.2)
+    base64 (0.3.0)
+    connection_pool (3.0.3)
+    drb (2.2.3)
+    logger (1.7.0)
+    minitest (6.1.0)
+      drb (~> 2.0)
+      prism (>= 1.5, < 3)
+    msgpack (1.8.7)
+    opentelemetry-api (1.11.1)
+      logger
+    prism (1.9.0)
+    racc (1.8.1)
+    rake (13.4.2)
+    standardwebhooks (1.1.0)
+    tomlrb (2.0.5)
+      racc (~> 1.4)
+
+PLATFORMS
+  ruby
+  x86_64-linux
+
+DEPENDENCIES
+  fmrb-tutor!
+  minitest (>= 5.25)
+  rake (>= 13)
+
+CHECKSUMS
+  anthropic (1.80.0) sha256=d02c7d532726c195b83de4d7355aaa0462b127f74f74d0b9540b3113356d0ea1
+  asterism (0.14.0) sha256=ab36d5de83a113f9cfb2b6ff8fd14a61b75c3380944ddf3f7be21d7da9a1c0bb
+  asterism-zenoh (0.4.2) sha256=d900d449b5a7fbe5ccd0f6cc80cce82ced55960f9bcb4cd5e4ad3f6f3b91d932
+  base64 (0.3.0) sha256=27337aeabad6ffae05c265c450490628ef3ebd4b67be58257393227588f5a97b
+  connection_pool (3.0.3) sha256=e0f8ee3ee0039396753e06e8a2dde0ef028e40f7df29e97f57da7577c489cb5e
+  drb (2.2.3) sha256=0b00d6fdb50995fe4a45dea13663493c841112e4068656854646f418fda13373
+  fmrb-tutor (0.1.0)
+  logger (1.7.0) sha256=196edec7cc44b66cfb40f9755ce11b392f21f7967696af15d274dde7edff0203
+  minitest (6.1.0) sha256=ff373595aa8888631e8a5463986a76b3845346ae6d7fa46e139c1633d418076e
+  msgpack (1.8.7) sha256=dfefec761b5f9047e6e8d95d2c7f8af4b3725d984a01942adc533aa819a2df33
+  opentelemetry-api (1.11.1) sha256=d07f9987ea6240b3fd5ed5dd7450f93c58e403e0553e804069c23ae18ba61ff7
+  prism (1.9.0) sha256=7b530c6a9f92c24300014919c9dcbc055bf4cdf51ec30aed099b06cd6674ef85
+  racc (1.8.1) sha256=4a7f6929691dbec8b5209a0b373bc2614882b55fc5d2e447a21aaa691303d62f
+  rake (13.4.2) sha256=cb825b2bd5f1f8e91ca37bddb4b9aaf345551b4731da62949be002fa89283701
+  standardwebhooks (1.1.0) sha256=356ba711c14def4fb27310e4163b26bd5cccf325212c3440cabadd825e4be11f
+  tomlrb (2.0.5) sha256=6e9a5e70a94a723842e770fcd14c49867703500d07cd03ebb6c343138a7b4477
+
+BUNDLED WITH
+  4.0.6

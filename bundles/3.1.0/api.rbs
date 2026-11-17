@@ -1,0 +1,1687 @@
+# array.rbs
+class Array
+  include Enumerable
+  # Set element at specified position
+  def []=: (Integer index, untyped value) -> untyped
+           | (Integer start, Integer length, untyped value) -> untyped
+  # Get element at specified position
+  def []: (Integer index) -> untyped
+  # Elements that are in both arrays
+  def &: (Array other) -> self
+  # Concatenate arrays
+  def +: (Array other) -> Array
+  # Return new array excluding specified elements
+  def -: (Array other) -> self
+  # Append element to end
+  def push: (untyped object) -> Array
+  # Whether every element passes
+  def all?: (*untyped patterns) -> bool
+            | (*untyped patterns) { (untyped element) -> untyped } -> bool
+  # Get element at specified position
+  def at: (Integer index) -> untyped
+  # Remove all elements from array
+  def clear: () -> Array
+  # Execute block for each element and destructively replace
+  def collect!: () { (untyped element) -> untyped } -> Array[untyped]
+  # Return the number of elements
+  def count: () -> Integer
+  # Delete element at specified position
+  def delete_at: (Integer index) -> untyped
+  # Delete elements for which block returns true
+  def delete_if: () { (untyped element) -> untyped } -> self
+  # Execute block for each element
+  def each: () { (untyped element) -> untyped } -> self
+  # Execute block for each index
+  def each_index: () { (Integer index) -> untyped } -> self
+  # Check if array is empty
+  def empty?: () -> bool
+  # Get first element
+  def first: () -> untyped
+  # Check if element is included
+  def include?: (untyped object) -> bool
+  # Return string representation for debugging
+  def inspect: () -> String
+  # Join elements and return string
+  def join: (?String separator) -> String
+  # Get last element
+  def last: () -> untyped
+  # Return number of elements in array
+  def length: () -> Integer
+  # The largest element
+  def max: () -> untyped
+           | () { (untyped left, untyped right) -> untyped } -> untyped
+  # The smallest element
+  def min: () -> untyped
+           | () { (untyped left, untyped right) -> untyped } -> untyped
+  # Remove and return last element
+  def pop: (?Integer count) -> (untyped | self)
+  # Return array without elements the block matches
+  def reject: () { (untyped element) -> untyped } -> self
+  # Delete the elements the block matches, in place
+  def reject!: () { (untyped element) -> untyped } -> self
+  # Remove and return first element
+  def shift: (?Integer count) -> (untyped | self)
+  # Return sorted array
+  def sort: () -> self
+            | () { (untyped left, untyped right) -> untyped } -> self
+  # Sort destructively
+  def sort!: () -> self
+             | () { (untyped left, untyped right) -> untyped } -> self
+  # Get subarray
+  def slice: (untyped index_or_range) -> untyped
+  # Return array with duplicates removed
+  def uniq: () -> self
+  # Remove duplicates destructively
+  def uniq!: () -> self
+  # Prepend element to beginning
+  def unshift: (untyped object) -> Array
+  # The two arrays joined, without duplicates
+  def |: (Array other) -> Array
+  # Make an array
+  def self.new: (?Integer size, ?untyped object) -> Array
+end
+# class.rbs
+class Class
+  # Return class name as string
+  def name: () -> String
+end
+# enumerable.rbs
+module Enumerable
+  # Run the block for each item
+  def each: () { (untyped item) -> untyped } -> untyped
+  # Run the block with the item and its position
+  def each_with_index: () { (untyped item, Integer index) -> untyped } -> untyped
+  # Return an array of what the block gave back
+  def map: () { (untyped item) -> untyped } -> Array
+  # Turn it into an array
+  def to_a: () -> Array
+end
+# false_class.rbs
+class FalseClass < Bool
+end
+# float.rbs
+class Float
+  # Calculate modulo
+  def %: ((Integer | Float) other) -> Float
+  # Perform multiplication
+  def *: ((Integer | Float) other) -> Float
+  # Calculate power
+  def **: ((Integer | Float) other) -> Float
+  # Perform addition
+  def +: ((Integer | Float) other) -> Float
+  # Unary plus operator. Returns self
+  def +@: () -> Float
+  # Perform subtraction
+  def -: ((Integer | Float) other) -> Float
+  # Unary minus operator. Inverts sign
+  def -@: () -> Float
+  # Perform division
+  def /: ((Integer | Float) other) -> Float
+  # Perform less than comparison
+  def <: ((Integer | Float) other) -> bool
+  # Perform less than or equal comparison
+  def <=: ((Integer | Float) other) -> bool
+  # Compare. Returns -1, 0 or 1
+  def <=>: ((Integer | Float) other) -> (Integer | nil)
+  # Perform equality comparison
+  def ==: (untyped other) -> bool
+  # Equality as `case` uses it
+  def ===: (untyped other) -> bool
+  # Perform greater than comparison
+  def >: ((Integer | Float) other) -> bool
+  # Perform greater than or equal comparison
+  def >=: ((Integer | Float) other) -> bool
+  # Get absolute value
+  def abs: () -> Float
+  # Return self as floating point number
+  def to_f: () -> Float
+  # Convert to integer (truncate)
+  def to_i: () -> Integer
+  # Convert to string
+  def to_s: () -> String
+end
+# fmrb_app.rbs
+class FmrbApp
+  type wallclock = { year: uint16, month: uint8, day: uint8, hour: uint8, minute: uint8, second: uint8 }
+  type sys_pool_info = { total: uint32, used: uint32, free: uint32, used_blocks: uint32, free_blocks: uint32 }
+  type gfx_stats = { cmds: uint32, presents: uint32 }
+  type wasm_stats = { running: uint8, apps: uint8, modules: uint8, natives: uint16, pool_total: uint32, pool_used: uint32, pool_high: uint32, traps: uint32 }
+  type wasm_app_stats = { pages: uint32, max_pages: uint32, binary_size: uint32, hook_us: uint32, hook_max_us: uint32, calls: uint32 }
+  type event = { type: :key_down | :key_up | :mouse_down | :mouse_up | :mouse_move | :mouse_wheel | :gamepad_down | :gamepad_up | :gamepad_axis | :kana_mode, x: int32, y: int32, wx: int32, wy: int32, button: int32, keycode: int32, scancode: int32, modifier: int32, character: int32, delta: int32, gamepad_id: int32, axis: int32, value: int32, mode: int32 }
+  @gfx: FmrbGfx
+  # The canvas to draw on
+  def gfx: () -> FmrbGfx
+  # Draws on the whole window, frame too
+  def window_gfx: () -> FmrbGfx
+  # The app's name
+  def name: () -> String
+  # Whether it is still running
+  def running?: () -> bool
+  # Window width in pixels
+  def window_width: () -> Integer
+  # Window height in pixels
+  def window_height: () -> Integer
+  # Left edge of the window
+  def pos_x: () -> Integer
+  # Top edge of the window
+  def pos_y: () -> Integer
+  # Width of the area the app owns
+  def user_area_width: () -> Integer
+  # Height of the area the app owns
+  def user_area_height: () -> Integer
+  # Which machine this is
+  def platform: () -> (:esp32 | :linux)
+  # Whether it fills the screen
+  def fullscreen?: () -> bool
+  # Whether the corners are rounded
+  def rounded_corners?: () -> bool
+  # Whether the close button ends it
+  def closable?: () -> bool
+  # Whether the window has no frame
+  def frameless?: () -> bool
+  # Whether the window resizes from its corner
+  def resizable?: () -> bool
+  # Called once as it starts
+  def on_create: () -> void
+  # called every frame; draw here
+  def on_update: () -> void
+  # Called once as it ends
+  def on_destroy: () -> void
+  # Called when the screen goes to another app
+  def on_suspend: () -> void
+  # Called when the screen comes back
+  def on_resume: () -> void
+  # Called once the app is written to an image
+  def on_checkpoint: () -> void
+  # Called when started from an image
+  def on_restore: () -> void
+  # Called when its own image is refused
+  def on_checkpoint_refused: (String reason) -> void
+  # called on key and mouse input
+  def on_event: (event ev) -> void
+  # Called when the window is resized
+  def on_resize: (Integer new_width, Integer new_height) -> void
+  # Called when it is asked to close
+  def on_quit_request: () -> void
+  # Right click or long press, frameless
+  def on_frameless_right_click: (event ev) -> void
+  # Hit shape: rectangles (frameless window)
+  def set_hit_shape: (Array rects) -> bool
+  # Hit shape: a mask (FmrbHitMask)
+  def set_hit_mask: (FmrbHitMask? mask, ?Integer x, ?Integer y) -> bool
+  # A hit mask from dot-art strings
+  def hit_mask_from_art: (Array rows, ?transparent: String, ?scale: Integer) -> FmrbHitMask
+  # Mark a sprite as part of the hit shape
+  def add_hit_sprite: (SpriteInstance sprite, ?FmrbHitMask? mask) -> bool
+  # Unmark a sprite
+  def remove_hit_sprite: (SpriteInstance sprite) -> void
+  # Back to the window rectangle
+  def clear_hit_shape: () -> bool
+  # Start the app running
+  def start: () -> void
+  # Stop the app
+  def stop: () -> void
+  # Let go of what it used
+  def destroy: () -> void
+  # Ask to be loaded again
+  def request_reload: () -> void
+  # Open this window's menu
+  def request_window_menu: (Integer x, Integer y) -> void
+  # Ask "Close <app>?" on the desktop
+  def request_close_confirm: () -> void
+  # The body that is called over and over
+  def main_loop: () -> void
+  # Redraw the frame and the title
+  def draw_window_frame: () -> void
+  # theme page colour by default
+  def clear_user_area: () -> void
+  # clear_user_area with nothing left out
+  def clear_user_area_raw: (Integer color) -> void
+  # page background from the system theme
+  def theme_bg: () -> Integer
+  # ink for text on theme_bg
+  def theme_fg: () -> Integer
+  # selection / emphasis colour
+  def theme_accent: () -> Integer
+  # rules, boxes, muted text
+  def theme_border: () -> Integer
+  # ink on accent or button backgrounds
+  def theme_fg_light: () -> Integer
+  # Draw a scrollbar down the right edge
+  def draw_scrollbar: (Integer scroll, Integer total, Integer visible) -> void
+  # Work out where the scrollbar was pressed
+  def scrollbar_hit: (Integer click_x, Integer click_y) -> Symbol?
+  # Move the window
+  def set_window_position: (Integer x, Integer y) -> FmrbApp
+  # Ask to go full screen or come back
+  def request_fullscreen: (bool on) -> void
+  # Switch between full screen and window
+  def toggle_fullscreen: () -> void
+  # Make a second canvas of its own
+  def create_canvas_gfx: (Integer width, Integer height) -> FmrbGfx
+  # Let go of a canvas it made
+  def delete_canvas_gfx: (FmrbGfx gfx) -> void
+  # Whether Ctrl was held
+  def ev_ctrl?: (event ev) -> bool
+  # Whether Shift was held
+  def ev_shift?: (event ev) -> bool
+  # Whether Alt was held
+  def ev_alt?: (event ev) -> bool
+  # Ask to be called on a timer
+  def set_timer: (Integer interval) -> Integer
+  # Stop a timer
+  def clear_timer: (Integer timer_id) -> void
+  # Start receiving a kind of notice
+  def subscribe: (String topic) -> void
+  # Stop receiving a kind of notice
+  def unsubscribe: (String topic) -> void
+  # Send a notice to everyone
+  def publish: (String topic) -> void
+  # Send a message to another app
+  def send_message: (Integer dest_pid, Integer msg_type, untyped data) -> void
+  # Ask for a file chooser
+  def request_file_select: (String mode) -> void
+  # request_file_select with nothing left out
+  def request_file_select_raw: (String mode) -> void
+  # Run a file as an app
+  def request_run: (String path) -> void
+  # request_run with nothing left out
+  def request_run_raw: (String path, Integer prev_pid) -> void
+  # Write this app to an image and close
+  def checkpoint: () -> String?
+  # Move this app to another machine
+  def move_to: (String to) -> String?
+  # Whether to tidy up when idle
+  def idle_gc: () -> bool
+  # The language now, "ja" or "en"
+  def self.language: () -> String
+  # The text on the clipboard
+  def self.clipboard: () -> String
+  # clipboard with nothing left out
+  def self.clipboard_raw: (Integer limit) -> String
+  # Put text on the clipboard
+  def self.set_clipboard: (String text) -> bool
+  # How many times the clipboard changed
+  def self.clipboard_gen: () -> Integer
+  # Show a small notice at the top right
+  def self.notify: (String summary, String body) -> bool
+  # notify with nothing left out
+  def self.notify_raw: (String summary, String body) -> bool
+  # The apps that are running
+  def self.ps: () -> Array
+  # How many times the app list changed
+  def self.ps_gen: () -> Integer
+  # Write another app to an image
+  def self.checkpoint: (Integer pid) -> String?
+  # Move another app to another machine
+  def self.move: (Integer pid, String to) -> String?
+  # How much memory is free
+  def self.heap_info: () -> Hash
+  # How much of its own memory is used
+  def self.pool_usage: () -> Integer
+  # How much of its own memory is used, in bytes
+  def self.pool_used: () -> Integer
+  # The whole machine's memory
+  def self.sys_pool_info: () -> sys_pool_info
+  # Read a settings file
+  def self.config: (String section_name) -> Array?
+  # Microseconds since power-on
+  def self.uptime_us: () -> int64
+  # Milliseconds since power-on
+  def self.uptime_ms: () -> int64
+  # The date and time now
+  def self.wallclock: () -> wallclock?
+  # A tally of the frames sent
+  def self.gfx_stats: () -> gfx_stats
+  # How the wasm runtime is doing
+  def self.wasm_stats: () -> wasm_stats
+  # How one wasm app is doing
+  def self.wasm_app_stats: (Integer pid) -> wasm_app_stats?
+  # Show the mouse pointer
+  def self.enable_cursor: () -> void
+  # Show or hide the mouse pointer
+  def self.set_cursor_visible: (bool visible) -> void
+  # Switch kana input (0 off 1 hira 2 kata)
+  def self.set_kana_mode: (Integer mode) -> void
+  # Tell where the text cursor is (for a PC's IME)
+  def self.set_text_cursor: (Integer x, Integer y, Integer h) -> void
+  # Whether the machine is muted
+  def self.audio_muted?: () -> bool
+  # Whether the entry cannot be deleted or renamed
+  def self.path_read_only?: (String path) -> bool
+  # An app's settings (.app.toml and comment)
+  def self.app_meta: (String path) -> Hash[String, String]?
+  # How many more bytes can be written where the path lives
+  def self.free_bytes: (String path) -> Integer?
+  # The machine's volume (0-10)
+  def self.audio_volume: () -> Integer
+  # Whether WiFi is connected
+  def self.wifi_connected?: () -> bool
+  # How WiFi is doing
+  def self.wifi_info: () -> Hash?
+  # The USB devices attached
+  def self.usb_devices: () -> Array
+  # Start receiving raw USB input
+  def self.hid_raw_subscribe: (Integer slot) -> bool
+  # Stop receiving raw USB input
+  def self.hid_raw_unsubscribe: (Integer slot) -> bool
+  # This app's own pid
+  def self.pid: () -> Integer
+  # The file this app was started from
+  def self.script_path: () -> String
+  # Collect this app's garbage now
+  def self.gc: () -> void
+  # The battery's charge in percent
+  def self.battery_level: () -> Integer?
+  # Whether the battery is charging
+  def self.battery_charging?: () -> bool
+  # The CRT look now
+  def self.crt_state: () -> String
+  # Whether Linux commands run here
+  def self.linux_available?: () -> bool
+  # Start a Linux command in a terminal
+  def self.linux_start: (String? cmd, String cwd, Integer cols, Integer rows) -> Integer
+  # Read a Linux command's output
+  def self.linux_read: (Integer h) -> String?
+  # Write to a Linux command
+  def self.linux_write: (Integer h, String data) -> Integer
+  # Send a signal to a Linux command
+  def self.linux_signal: (Integer h, Symbol sig) -> bool
+  # A Linux command's exit code
+  def self.linux_exit_code: (Integer h) -> Integer?
+  # Resize a Linux command's terminal
+  def self.linux_resize: (Integer h, Integer cols, Integer rows) -> bool
+  # Close a Linux command
+  def self.linux_close: (Integer h) -> void
+end
+# fmrb_audio.rbs
+class FmrbAudio
+  type nsf_status = { state: uint8, reason: uint8, track: uint8, laps: uint8, gen: uint16, period: uint16, frames: uint32 }
+  # Make the sound handler
+  def self.new: (FmrbApp app) -> FmrbAudio
+  # Play a song file
+  def play: (String path) -> void
+  # play with nothing left out
+  def play_raw: (String path, Integer track) -> void
+  # Stop the song
+  def stop: () -> void
+  # Ask where the song is
+  def nsf_status: () -> nsf_status?
+  NSF_IDLE: Integer
+  NSF_PLAYING: Integer
+  NSF_FADING: Integer
+  NSF_ENDED: Integer
+  NSF_END_SILENCE: Integer
+  NSF_END_LOOP: Integer
+  NSF_END_LIMIT: Integer
+  # Pause the song
+  def pause: () -> void
+  # Carry on from the pause
+  def resume: () -> void
+  # Put song data into a slot
+  def load_fmsq: (Integer slot_id, bin binary_data) -> void
+  # Read a song file into a slot
+  def load_fmsq_file: (Integer slot_id, String path) -> void
+  # Play the song in a slot
+  def play_slot: (Integer slot_id) -> void
+  # play_slot with nothing left out
+  def play_slot_raw: (Integer slot_id, Integer instance) -> void
+  # Set the volume of the music (MAIN) only
+  def main_volume=: (Integer percent) -> void
+  # Play a recorded sound (WAV)
+  def play_wav: (String path) -> bool
+  # Stop the WAV that is playing
+  def stop_wav: () -> bool
+  # Sound one note
+  def note_on: (Integer channel, Integer freq) -> void
+  # note_on with nothing left out
+  def note_on_raw: (Integer channel, Integer freq, Integer volume, Integer duty, Integer sweep) -> void
+  # Stop a note
+  def note_off: (Integer channel) -> void
+end
+class NsfHeader
+  # Read the title and the rest from a song file
+  def self.parse: (String path) -> NsfHeader?
+  # The song's title
+  def song_name: () -> String
+  # Who made it
+  def artist: () -> String
+  # The rights notice
+  def copyright: () -> String
+  # How many songs are inside
+  def total_songs: () -> Integer
+  # Which song plays first
+  def starting_song: () -> Integer
+end
+# fmrb_file.rbs
+module FmrbFile
+  # Read a whole file
+  def self.read: (String path) -> bin?
+  # Write a whole file, replacing it
+  def self.write: (String path, bin data) -> bool
+  # Add to the end of a file
+  def self.append: (String path, bin data) -> bool
+  # Whether a file or a directory is there
+  def self.exist?: (String path) -> bool
+  # A file's size in bytes
+  def self.size: (String path) -> int64?
+  # Delete a file or an empty directory
+  def self.delete: (String path) -> bool
+  # Make a directory
+  def self.mkdir: (String path) -> bool
+  # The names in a directory
+  def self.list: (String dir) -> Array[String]?
+  # list as one String, a name per line
+  def self.list_raw: (String dir) -> String?
+  # Whether the entry cannot be deleted or renamed
+  def self.path_read_only?: (String path) -> bool
+  # How many more bytes can be written where the path lives
+  def self.free_bytes: (String path) -> int64?
+end
+# fmrb_gfx.rbs
+module FmrbText
+  # Cut a text to fit a width in pixels
+  def fit_text: (String text, Integer width) -> String
+  # Wrap a text into at most two lines
+  def wrap_text: (String text, Integer width) -> Array[String]
+  # Draw a text wrapped into lines
+  def draw_text_lines: (Integer x, Integer y, String text, Integer width, Integer color, Integer line_h) -> Integer
+end
+class FmrbGfx
+  include FmrbText
+  type image_info = { id: uint16, width: uint16, height: uint16 }
+  type file_info = { exists: bool, size: uint32 }
+  type composite_region = { src_x: int16, src_y: int16, dst_x: int16, dst_y: int16, w: int16, h: int16, transparent: bool }
+  type video_info = { width: uint16, height: uint16 }
+  type video_status = { state: uint8, shown: uint32, dropped: uint32 }
+  BLACK: Integer
+  WHITE: Integer
+  RED: Integer
+  GREEN: Integer
+  BLUE: Integer
+  YELLOW: Integer
+  CYAN: Integer
+  MAGENTA: Integer
+  GRAY: Integer
+  COLOR_BLACK: Integer
+  COLOR_WHITE: Integer
+  COLOR_RED: Integer
+  COLOR_GREEN: Integer
+  COLOR_BLUE: Integer
+  COLOR_YELLOW: Integer
+  COLOR_CYAN: Integer
+  COLOR_MAGENTA: Integer
+  COLOR_GRAY: Integer
+  BLEND_ADD: Integer
+  BLEND_XOR: Integer
+  # The canvas number
+  def canvas_id: () -> Integer
+  # Canvas width in pixels
+  def canvas_width: () -> Integer
+  # Width of the area drawn in
+  def area_width: () -> Integer
+  # Height of the area drawn in
+  def area_height: () -> Integer
+  # Where the origin is on the canvas (x)
+  def origin_x: () -> Integer
+  # Where the origin is on the canvas (y)
+  def origin_y: () -> Integer
+  # Canvas height in pixels
+  def canvas_height: () -> Integer
+  # The font in use now
+  def current_font: () -> Symbol
+  # The text scale in use now
+  def current_text_size: () -> Integer
+  # Paint the whole canvas one colour
+  def clear: (Integer color) -> FmrbGfx
+  # Set one pixel
+  def set_pixel: (Integer x, Integer y, Integer color) -> FmrbGfx
+  # Read one pixel's colour
+  def get_pixel: (Integer x, Integer y) -> Integer
+  # Draw a straight line
+  def draw_line: (Integer x0, Integer y0, Integer x1, Integer y1, Integer color) -> FmrbGfx
+  # Draw a line with a thickness
+  def draw_thick_line: (Integer x0, Integer y0, Integer x1, Integer y1, Integer thickness, Integer color) -> FmrbGfx
+  # Draw the outline of a rectangle
+  def draw_rect: (Integer x, Integer y, Integer w, Integer h, Integer color) -> FmrbGfx
+  # Fill a rectangle
+  def fill_rect: (Integer x, Integer y, Integer w, Integer h, Integer color) -> FmrbGfx
+  # Fill a rectangle blended with what is under it
+  def blend_rect: (Integer x, Integer y, Integer w, Integer h, Integer color, Integer mode) -> FmrbGfx
+  # Draw a rounded rectangle outline
+  def draw_round_rect: (Integer x, Integer y, Integer w, Integer h, Integer r, Integer color) -> FmrbGfx
+  # Fill a rounded rectangle
+  def fill_round_rect: (Integer x, Integer y, Integer w, Integer h, Integer r, Integer color) -> FmrbGfx
+  # Draw the picture of a rounded button
+  def draw_button: (Integer x, Integer y, Integer w, Integer h, String label, Integer fill, Integer fg) -> FmrbGfx
+  # Draw a circle outline
+  def draw_circle: (Integer x, Integer y, Integer r, Integer color) -> FmrbGfx
+  # Fill a circle
+  def fill_circle: (Integer x, Integer y, Integer r, Integer color) -> FmrbGfx
+  # Draw an ellipse outline
+  def draw_ellipse: (Integer x, Integer y, Integer rx, Integer ry, Integer color) -> FmrbGfx
+  # Fill an ellipse
+  def fill_ellipse: (Integer x, Integer y, Integer rx, Integer ry, Integer color) -> FmrbGfx
+  # Draw a triangle outline
+  def draw_triangle: (Integer x0, Integer y0, Integer x1, Integer y1, Integer x2, Integer y2, Integer color) -> FmrbGfx
+  # Fill a triangle
+  def fill_triangle: (Integer x0, Integer y0, Integer x1, Integer y1, Integer x2, Integer y2, Integer color) -> FmrbGfx
+  # Draw an arc
+  def draw_arc: (Integer x, Integer y, Integer r0, Integer r1, Integer angle0, Integer angle1, Integer color) -> FmrbGfx
+  # Fill a wedge of a circle
+  def fill_arc: (Integer x, Integer y, Integer r0, Integer r1, Integer angle0, Integer angle1, Integer color) -> FmrbGfx
+  # draw a string
+  def draw_text: (Integer x, Integer y, String text, Integer color) -> FmrbGfx
+  # draw_text with nothing left out
+  def draw_text_raw: (Integer x, Integer y, String text, Integer color, Integer bg_color, bool mixed) -> FmrbGfx
+  # Choose the font and size
+  def set_font: (Symbol family, ?Integer size) -> Array[untyped]
+  # set_font with nothing left out
+  def set_font_raw: (:default | :ja | :ja_bold family, Integer size) -> FmrbGfx
+  # Set the text scale
+  def set_text_size: (Integer size) -> FmrbGfx
+  # set_text_size without the wrapper
+  def set_text_size_raw: (Integer size) -> FmrbGfx
+  # Measure how wide text would be
+  def text_width: (String text) -> Integer
+  # The height of one line
+  def font_height: () -> Integer
+  # Draw the time now
+  def draw_wallclock: (Integer x, Integer y, Integer color, Integer bg_color) -> bool
+  # Draw how much memory is free
+  def draw_free_iram: (Integer x, Integer y, Integer color, Integer bg_color) -> bool
+  # Load an image file and place it
+  def load_image: (String path) -> void
+  # Make an image from a file
+  def create_image: (String path) -> image_info?
+  # Draw an image you made
+  def draw_image: (Integer image_id) -> FmrbGfx
+  # draw_image with nothing left out
+  def draw_image_raw: (Integer image_id, Integer x, Integer y, Float scale_x, Float scale_y) -> FmrbGfx
+  # Let go of an image you made
+  def delete_image: (Integer image_id) -> FmrbGfx
+  # Draw one piece cut out of an image
+  def draw_tile: (Integer image_id, Integer src_x, Integer src_y, Integer w, Integer h) -> FmrbGfx
+  # draw_tile with nothing left out
+  def draw_tile_raw: (Integer image_id, Integer src_x, Integer src_y, Integer w, Integer h, Integer dst_x, Integer dst_y) -> FmrbGfx
+  # Make a mask
+  def create_mask: (Integer width, Integer height, bin data) -> Integer
+  # Let go of a mask
+  def delete_mask: (Integer mask_id) -> FmrbGfx
+  # Draw an image through a mask
+  def draw_image_masked: (Integer image_id, Integer mask_id) -> FmrbGfx
+  # draw_image_masked, plain arguments
+  def draw_image_masked_raw: (Integer image_id, Integer mask_id, Integer x, Integer y) -> FmrbGfx
+  # show what has been drawn
+  def present: () -> FmrbGfx
+  # present with nothing left out
+  def present_raw: (Integer x, Integer y, bool positioned) -> FmrbGfx
+  # Let go of this canvas
+  def destroy: () -> FmrbGfx
+  # Shift what part of the canvas is shown
+  def set_viewport: (Integer src_x, Integer src_y, Integer w, Integer h) -> FmrbGfx
+  # Put the shown part back
+  def clear_viewport: () -> FmrbGfx
+  # Set the regions that are composited
+  def set_composite_regions: (Array[Hash] regions) -> FmrbGfx
+  # set_composite_regions, every field given
+  def set_composite_regions_raw: (Array[composite_region] regions) -> FmrbGfx
+  # limit where sprites may appear
+  def set_sprite_clip: (Integer x, Integer y, Integer w, Integer h) -> FmrbGfx
+  # let sprites use the whole canvas
+  def clear_sprite_clip: () -> FmrbGfx
+  # Make a sprite image
+  def create_sprite_image: (Integer width, Integer height, Integer transparent_color, bool use_transparent) -> Integer
+  # Let go of a sprite image
+  def delete_sprite_image: (Integer image_id) -> FmrbGfx
+  # Read a PNG or BMP into a sprite image
+  def load_sprite_image: (Integer image_id, String path) -> FmrbGfx
+  # Draw into a sprite image
+  def set_sprite_image_target: (Integer image_id) -> FmrbGfx
+  # Place sprite images on the canvas
+  def create_sprite_instance: (Array[uint16] image_ids, Integer x, Integer y, Integer z) -> Integer
+  # Let go of a placed sprite
+  def delete_sprite_instance: (Integer instance_id) -> FmrbGfx
+  # Move a placed sprite
+  def move_sprite: (Integer instance_id, Integer x, Integer y) -> FmrbGfx
+  # Show or hide a placed sprite
+  def set_sprite_visible: (Integer instance_id, bool visible) -> FmrbGfx
+  # Which frame a placed sprite shows
+  def set_sprite_frame: (Integer instance_id, Integer frame) -> FmrbGfx
+  # Let go of every sprite on this canvas
+  def delete_all_sprites: () -> FmrbGfx
+  # Play a motion-JPEG file into the canvas (Modern)
+  def video_open: (String path) -> FmrbVideo?
+  # video_open with nothing left out
+  def video_open_raw: (String path, Integer x, Integer y, Integer fps, bool loop) -> video_info?
+  # Write the presented picture to a file
+  def export_frame: (String path) -> FmrbGfx
+  # Set the video brightness
+  def set_output_level: (Integer level) -> FmrbGfx
+  # Set the colour depth of the video
+  def set_chroma_level: (Integer level) -> FmrbGfx
+  # Send an image or sound file across
+  def sync_file: (String path) -> bool
+  # sync_file with nothing left out
+  def sync_file_raw: (String path, String dest) -> bool
+  # Send a file again whatever happens
+  def transfer_file: (String path) -> bool
+  # transfer_file with nothing left out
+  def transfer_file_raw: (String path, String dest) -> bool
+  # Whether the file arrived
+  def file_status: (String path) -> file_info
+  # Make a colour from red, green and blue
+  def self.rgb_to_332: (Integer r, Integer g, Integer b) -> Integer
+  # Play, pause, stop or rewind the video
+  def self.video_control: (:play | :pause | :stop | :rewind action) -> video_status?
+  # The video player's state
+  def self.video_status: () -> video_status?
+  # Make a colour from hue, saturation and value
+  def self.hsv_to_rgb: (Integer h, Integer s, Integer v) -> Array
+end
+class FmrbVideo
+  # The video's width in pixels
+  def width: () -> Integer
+  # The video's height in pixels
+  def height: () -> Integer
+  # Play
+  def play: () -> FmrbVideo
+  # Pause
+  def pause: () -> FmrbVideo
+  # Stop and close the file
+  def stop: () -> FmrbVideo
+  # Back to the start
+  def rewind: () -> FmrbVideo
+  # The player's state
+  def status: () -> FmrbGfx::video_status?
+  # Whether it is playing
+  def playing?: () -> bool
+  # Whether it has played to the end
+  def finished?: () -> bool
+end
+# fmrb_midi.rbs
+module FmrbMidi
+  # Make this app's way of sounding notes
+  def self.device: (FmrbApp app) -> MIDI::Device
+  # The time now, in microseconds
+  def self.now_us: () -> Integer
+  # Register somewhere to send notes
+  def self.register: (untyped transport) -> untyped
+  # Stop sending notes there
+  def self.unregister: (untyped transport) -> void
+  # Everywhere notes are being sent
+  def self.transports: () -> Array
+  # The instrument's name from its number
+  def self.gm_name: (Integer program) -> String
+  class SmfPlayer
+  # Make the song player
+  def self.new: (MIDI::Device device) -> SmfPlayer
+  # Read a song file
+  def load: (String path) -> bool
+  # Whether a song was read
+  def loaded?: () -> bool
+  # Start the song
+  def start: () -> void
+  # Stop the song
+  def stop: () -> void
+  # Pause the song
+  def pause: () -> void
+  # Carry on from the pause
+  def resume: () -> void
+  # Whether it is playing
+  def playing?: () -> bool
+  # Whether it reached the end
+  def finished?: () -> bool
+  # Move the song on -- call it every time
+  def tick: () -> void
+  # How far it has played, in milliseconds
+  def position_ms: () -> Integer
+  # Which channels the song uses
+  def channel_usage: () -> Hash
+  # How fast to play, against what is written
+  def tempo_scale: () -> Float
+  # Change the playback speed
+  def tempo_scale=: (Float value) -> void
+  # Why the read failed
+  def error: () -> String?
+  # Where the song file is
+  def path: () -> String?
+  end
+  class MmlPlayer
+  # Make the MML player
+  def self.new: (MIDI::Device device) -> MmlPlayer
+  # Read MML text
+  def load_string: (String mml) -> bool
+  # Add another part
+  def add_string: (String mml) -> bool
+  # Whether anything was read
+  def loaded?: () -> bool
+  # How many notes are in it
+  def event_count: () -> Integer
+  # Start playing
+  def start: () -> void
+  # Stop
+  def stop: () -> void
+  # Pause
+  def pause: () -> void
+  # Carry on
+  def resume: () -> void
+  # Whether it is playing
+  def playing?: () -> bool
+  # Whether it reached the end
+  def finished?: () -> bool
+  # Move the song on -- call it every time
+  def tick: () -> void
+  # The tempo in beats per minute
+  def bpm: () -> Integer
+  # Change the tempo
+  def bpm=: (Integer value) -> void
+  # Why the read failed
+  def error: () -> String?
+  end
+end
+module MIDI
+  class Device
+  # Sound a note
+  def note_on: (Integer note) -> void
+  # Stop a note
+  def note_off: (Integer note) -> void
+  # Bend the pitch
+  def pitch_bend: (Integer value) -> void
+  # Choose an instrument
+  def program_change: (Integer program) -> void
+  # Send a controller value
+  def control_change: (Integer cc, Integer value) -> void
+  # Set the loudness
+  def volume: (Integer value) -> void
+  # Set the left-right position
+  def pan: (Integer value) -> void
+  # Set the depth of the vibrato
+  def modulation: (Integer value) -> void
+  # Shape the loudness within a piece
+  def expression: (Integer value) -> void
+  # Press or release the pedal
+  def sustain: (Integer on_off) -> void
+  # Sound a note for a set length
+  def trigger: (Integer note) -> void
+  # Sound several notes at once
+  def trigger_batch: (Array events) -> void
+  # Stop every note that is sounding
+  def all_notes_off: () -> void
+  # Stop every sound at once
+  def all_sound_off: () -> void
+  # Put every controller back
+  def reset_all_controllers: () -> void
+  # Send a beat marker
+  def send_clock: () -> void
+  # Send a start marker
+  def send_start: () -> void
+  # Send a stop marker
+  def send_stop: () -> void
+  # Send a continue marker
+  def send_continue: () -> void
+  # Send a device's own data
+  def send_sysex: (String data) -> void
+  # Whether it is connected
+  def connected?: () -> bool
+  # The name of what is connected
+  def info: () -> Hash
+  end
+end
+# fmrb_misc.rbs
+module FmrbI18n
+  # Add a table of words
+  def self.add: (Hash table) -> void
+  # The language now, "ja" or "en"
+  def self.lang: () -> String
+  # Look a key up in the language now
+  def self.t: (Symbol key) -> String
+  # Measure how wide text would be
+  def self.text_width: (String str) -> Integer
+  # Cut it down to what fits the width
+  def self.truncate_to: (String str, Integer max_px) -> String
+end
+module Log
+  # Write a debug line to the log
+  def self.debug: (String msg) -> void
+  # debug with nothing left out
+  def self.debug_raw: (String msg) -> void
+  # Write a line to the log
+  def self.info: (String msg) -> void
+  # info with nothing left out
+  def self.info_raw: (String msg) -> void
+  # Write a warning to the log
+  def self.warn: (String msg) -> void
+  # warn with nothing left out
+  def self.warn_raw: (String msg) -> void
+  # Write an error to the log
+  def self.error: (String msg) -> void
+  # error with nothing left out
+  def self.error_raw: (String msg) -> void
+end
+class File
+  # Open a file
+  def self.open: (String path, String mode) -> File
+  # Whether the file is there
+  def self.exist?: (String path) -> bool
+  # Read the whole thing
+  def read: () -> String
+  # Read one line
+  def gets: () -> String?
+  # Write to the file
+  def write: (String str) -> Integer
+  # Close it
+  def close: () -> void
+end
+# fmrb_p5.rbs
+class P5
+  # Make the p5-style drawing tools
+  def self.new: (FmrbGfx gfx) -> P5
+  # Canvas width in pixels
+  def width: () -> Integer
+  # Canvas height in pixels
+  def height: () -> Integer
+  # Paint the whole canvas one colour
+  def background: (Integer color) -> void
+  # Show what has been drawn
+  def present: () -> void
+  # Set the fill colour
+  def fill: (Integer color) -> void
+  # Draw nothing inside
+  def no_fill: () -> void
+  # Set the outline colour
+  def stroke: (Integer color) -> void
+  # Draw no outline
+  def no_stroke: () -> void
+  # Set the outline thickness
+  def stroke_weight: (Integer w) -> void
+  # Set how colours are blended
+  def blend_mode: (Integer mode) -> void
+  # Set the transparency (does nothing yet)
+  def alpha: (Integer value) -> void
+  # Make a colour from red, green and blue
+  def color: (Integer r, Integer g, Integer b) -> Integer
+  # Set one pixel
+  def point: (Integer x, Integer y) -> void
+  # Draw a line
+  def line: (Integer x0, Integer y0, Integer x1, Integer y1) -> void
+  # Draw a rectangle
+  def rect: (Integer x, Integer y, Integer w, Integer h) -> void
+  # Draw a circle
+  def circle: (Integer cx, Integer cy, Integer r) -> void
+  # Draw an ellipse
+  def ellipse: (Integer cx, Integer cy, Integer rx, Integer ry) -> void
+  # Draw a triangle
+  def triangle: (Integer x0, Integer y0, Integer x1, Integer y1, Integer x2, Integer y2) -> void
+  # Draw a quadrilateral from four points
+  def quad: (Integer x0, Integer y0, Integer x1, Integer y1, Integer x2, Integer y2, Integer x3, Integer y3) -> void
+  # Draw an arc
+  def arc: (Integer cx, Integer cy, Integer r, Integer start_angle, Integer stop_angle) -> void
+  # Draw a smooth curve
+  def bezier: (Integer x1, Integer y1, Integer x2, Integer y2, Integer x3, Integer y3, Integer x4, Integer y4) -> void
+  # Draw a curve through points
+  def curve: (Integer x1, Integer y1, Integer x2, Integer y2, Integer x3, Integer y3, Integer x4, Integer y4) -> void
+  # Start a free shape
+  def begin_shape: () -> void
+  # Add a corner to the shape
+  def vertex: (Integer x, Integer y) -> void
+  # Finish the free shape
+  def end_shape: () -> void
+  # Draw text
+  def text: (String str, Integer x, Integer y) -> void
+  # Choose the font
+  def text_font: (Symbol font) -> void
+  # Set the text colour
+  def text_color: (Integer color) -> void
+  # Set how text is aligned
+  def text_align: (Symbol horizontal) -> void
+  # Set the space between lines
+  def text_leading: (Integer pixels) -> void
+  # Measure how wide text would be
+  def text_width: (String str) -> Integer
+  # Shift where things are drawn
+  def translate: (Integer tx, Integer ty) -> void
+  # Turn what is drawn
+  def rotate: (Integer angle) -> void
+  # Scale what is drawn
+  def scale: (Integer sx) -> void
+  # Remember the current transform
+  def push_matrix: () -> void
+  # Go back to the remembered transform
+  def pop_matrix: () -> void
+  # Clear every transform
+  def reset_matrix: () -> void
+  # Set one pixel
+  def set_pixel: (Integer x, Integer y, Integer color) -> void
+  # Read one pixel's colour
+  def get_pixel: (Integer x, Integer y) -> Integer
+  # Draw a loaded image
+  def image: (Integer image_id, Integer x, Integer y) -> void
+  # Draw an image through a mask
+  def image_masked: (Integer image_id, String mask_data, Integer x, Integer y, Integer w, Integer h) -> void
+end
+# fmrb_sprite.rbs
+class SpriteImage
+  # This image's number
+  def id: () -> Integer
+  # Image width in pixels
+  def width: () -> Integer
+  # Image height in pixels
+  def height: () -> Integer
+  # Make an image (the size is in pixels)
+  def self.new: (FmrbGfx gfx) -> SpriteImage
+  # Draw into this image from now on
+  def set_target: () -> void
+  # Draw on the screen again
+  def reset_target: () -> void
+  # Draw into this image (inside the block)
+  def draw: () -> void
+  # Read a PNG or BMP into this image
+  def load_bmp: (String path) -> void
+  # Let go of this image
+  def destroy: () -> void
+end
+class SpriteInstance
+  # This placed sprite's number
+  def id: () -> Integer
+  # Place an image on the screen
+  def self.new: (FmrbGfx gfx, untyped images) -> SpriteInstance
+  # Move the placed sprite
+  def move: (Integer x, Integer y) -> void
+  # Let go of this sprite
+  def destroy: () -> void
+  # Show or hide it
+  def visible=: (bool v) -> void
+  # Which frame to show (0 is the first)
+  def frame=: (Integer index) -> void
+  # Whether it is shown
+  def visible?: () -> bool
+  # Where it is now: x (window coordinates)
+  def x: () -> Integer
+  # Where it is now: y (window coordinates)
+  def y: () -> Integer
+  # Width (of the first image)
+  def width: () -> Integer
+  # Height (of the first image)
+  def height: () -> Integer
+end
+class FmrbHitMask
+  # Make a mask (bits row by row)
+  def self.new: (Integer width, Integer height, String bits, ?Integer scale) -> FmrbHitMask
+  # Make one from dot-art strings
+  def self.from_art: (Array rows, ?transparent: String, ?scale: Integer) -> FmrbHitMask
+  # Whether the cell is hit
+  def set?: (Integer cx, Integer cy) -> bool
+  # Width in cells
+  def width: () -> Integer
+  # Height in cells
+  def height: () -> Integer
+  # Pixels per cell
+  def scale: () -> Integer
+  # The bits
+  def bits: () -> String
+end
+class GfxBlock
+  # Make a drawing to replay (the block says how)
+  def self.new: (FmrbGfx gfx) -> GfxBlock
+  # Replay it with different numbers
+  def draw: () -> void
+  # Let go of the drawing
+  def destroy: () -> void
+  # Whether it has been let go of
+  def destroyed?: () -> bool
+end
+# fmrb_system.rbs
+module FmrbSystem
+  # Set the date and time
+  def self.set_wallclock: (Integer year, Integer month, Integer day, Integer hour, Integer minute, Integer second) -> Hash?
+  # Restart the machine
+  def self.reboot: () -> void
+  # Mute or unmute the whole machine
+  def self.set_audio_mute: (bool on) -> void
+  # Set the machine's volume (0-10)
+  def self.set_audio_volume: (Integer step) -> void
+  # Try a volume without saving it
+  def self.preview_audio_volume: (Integer step) -> void
+  # Say the sound settings were written
+  def self.audio_conf_saved: () -> void
+  # Whether the remote control is allowed
+  def self.remote_access: () -> Integer
+  # The number a PC pairs with
+  def self.remote_access_code: () -> Integer
+  # Open or close the remote control
+  def self.set_remote_access: (bool on) -> void
+  # Start or stop taking new PCs
+  def self.set_remote_pairing: (bool on) -> void
+  # How many PCs are paired
+  def self.remote_access_paired: () -> Integer
+  # Forget every paired PC
+  def self.revoke_remote_access: () -> bool
+  # Start Bluetooth
+  def self.ble_start: () -> bool
+  # How Bluetooth is doing
+  def self.ble_state: () -> Integer
+  # Open the window for settings over BLE
+  def self.ble_settings_window: (Integer seconds) -> Integer
+  # Seconds left in the settings window
+  def self.ble_settings_left: () -> Integer
+  # Whether the screen is being streamed
+  def self.rd_stream_state: () -> Integer
+  # The power actions this machine offers
+  def self.power_actions: () -> Array
+  # Do one of the power actions
+  def self.power: (Symbol action) -> bool
+  # The PC's applications, for the launcher
+  def self.linux_apps: (Integer mode, String lang) -> String
+  # Start one of the PC's applications
+  def self.linux_launch: (Integer id) -> Integer
+  # The PC's applications that open a file
+  def self.linux_handlers: (String path) -> String
+  # Open a file in one of the PC's applications
+  def self.linux_open: (Integer id, String path) -> String
+  # The Wi-Fi networks
+  def self.wifi_networks: (bool scan) -> String
+  # Join a Wi-Fi network
+  def self.wifi_connect: (String ssid, String password) -> bool
+  # Leave the Wi-Fi network
+  def self.wifi_disconnect: () -> bool
+  # Forget a saved Wi-Fi network
+  def self.wifi_forget: (String ssid) -> bool
+  # The Bluetooth devices
+  def self.bt_devices: () -> String
+  # Turn Bluetooth on or off
+  def self.bt_power: (bool on) -> bool
+  # Connect or disconnect a Bluetooth device
+  def self.bt_connect: (String address, bool on) -> bool
+  # How many times the PC's notices changed
+  def self.notices_gen: () -> Integer
+  # The PC's notices
+  def self.notices: () -> String
+  # Dismiss one of the PC's notices
+  def self.notice_dismiss: (Integer id) -> void
+  # The stand-in's Linux window title
+  def self.wl_window: () -> (String | bool | nil)
+  # Ask the Linux window to close
+  def self.wl_close: () -> bool
+  # The canvas's colour key (native only)
+  def self.wl_key: () -> Integer
+  # Linux's keyboard layout (native only)
+  def self.linux_keyboard: () -> String
+  # Open the PC's settings window (native only)
+  def self.linux_settings: (String page) -> bool
+  # The settings page asked for
+  def self.settings_page: () -> Integer
+  # Set the CRT look (native only)
+  def self.crt_set: (bool crt, Integer scanline, Integer mask, Integer glow, Integer curve, Integer vignette, Integer ntsc, Integer flicker, Integer noise) -> bool
+end
+# fmrb_tile.rbs
+class TileSheet
+  # Load a sheet of tiles
+  def self.new: (FmrbGfx gfx, String path) -> TileSheet
+  # The sprite image behind it
+  def image: () -> SpriteImage
+  # How many tiles across
+  def cols: () -> Integer
+  # How many tiles down
+  def rows: () -> Integer
+  # One tile's size in pixels
+  def tile_size: () -> Integer
+  # Stamp one numbered tile
+  def stamp: (Integer index) -> void
+  # Let go of the sheet
+  def destroy: () -> void
+end
+class TileMap
+  # Load a map file
+  def self.new: (String json_path) -> TileMap
+  # The map's width in tiles
+  def width: () -> Integer
+  # The map's height in tiles
+  def height: () -> Integer
+  # One tile's size in pixels
+  def tile_size: () -> Integer
+  # The tile sheet it uses
+  def tilesheet_path: () -> String
+  # How many tiles across that sheet is
+  def tilesheet_cols: () -> Integer
+  # The layers of the map
+  def layers: () -> Array
+  # The events placed on the map
+  def events: () -> Array
+  # Which tile numbers can be walked on
+  def walkable_tiles: () -> Array
+  # Where the player starts
+  def spawn_x: () -> Integer
+  # Where the player starts
+  def spawn_y: () -> Integer
+  # The tile number at that square
+  def tile_at: (Integer x, Integer y) -> Integer?
+  # Whether that square can be walked on
+  def walkable?: (Integer x, Integer y) -> bool
+  # The event on that square
+  def event_at: (Integer x, Integer y) -> Hash?
+  # Draw the whole map
+  def render: (TileSheet sheet) -> void
+  # Draw only what is in sight
+  def render_view: (TileSheet sheet) -> void
+end
+class TileRing
+  # Make the ring buffer that scrolls
+  def self.new: (TileMap map, TileSheet sheet) -> TileRing
+  # The buffer's width in pixels
+  def buf_w: () -> Integer
+  # The buffer's height in pixels
+  def buf_h: () -> Integer
+  # Stamp the columns that came into sight
+  def ensure_view: (Integer view_x, Integer view_y, Integer view_w, Integer view_h) -> void
+end
+# fmrb_types.rbs
+type int8 = Integer
+type int16 = Integer
+type int32 = Integer
+type int64 = Integer
+type uint8 = Integer
+type uint16 = Integer
+type uint32 = Integer
+type uint64 = Integer
+type float32 = Float
+type float64 = Float
+type bin = String
+# fmrb_ui.rbs
+class FmrbUI
+  # Create the widget box
+  def self.new: (FmrbApp app) -> FmrbUI
+  # Place a text label
+  def label: (Symbol id, Integer x, Integer y, Integer w, Integer h, String text) -> FmrbUI::Label
+  # Place a push button
+  def button: (Symbol id, Integer x, Integer y, Integer w, Integer h, String text) -> FmrbUI::Button
+  # Place an on/off toggle
+  def toggle: (Symbol id, Integer x, Integer y, Integer w, Integer h, String text) -> FmrbUI::Toggle
+  # Place a value stepper
+  def stepper: (Symbol id, Integer x, Integer y, Integer w, Integer h, Integer value, Integer min, Integer max) -> FmrbUI::Stepper
+  # Place a choice picker
+  def enum: (Symbol id, Integer x, Integer y, Integer w, Integer h, Array[String] options) -> FmrbUI::Enum
+  # The chosen string
+  def option_text: (Symbol id) -> String?
+  # Place a one-line text field
+  def text_field: (Symbol id, Integer x, Integer y, Integer w, Integer h, String text) -> FmrbUI::TextField
+  # What has been typed
+  def field_text: (Symbol id) -> String?
+  # Replace what is in the field
+  def set_field_text: (Symbol id, String text) -> void
+  # Give a widget the focus
+  def focus: (Symbol id) -> void
+  # Which widget has the focus
+  def focused: () -> Symbol?
+  # Feed one event
+  def handle: (Hash[Symbol, untyped] ev) -> Symbol?
+  # Draw the changed widgets
+  def flush: () -> bool
+  # Mark every widget for redraw
+  def invalidate_all: () -> void
+  # Find a widget by id
+  def find: (Symbol id) -> FmrbUI::Widget?
+  # Move and resize a widget
+  def move: (Symbol id, Integer x, Integer y, Integer w, Integer h) -> void
+  # Whether the toggle is on
+  def on?: (Symbol id) -> bool
+  # Set a toggle from the app
+  def set_on: (Symbol id, bool on) -> void
+  # Change a widget's text
+  def set_text: (Symbol id, String text) -> void
+  # Set a stepper value from the app
+  def set_value: (Symbol id, Integer value) -> bool
+  # Read the current stepper value
+  def value: (Symbol id) -> Integer
+  # Enable or disable a widget
+  def set_enabled: (Symbol id, bool flag) -> void
+  # Show or hide a widget
+  def set_visible: (Symbol id, bool flag) -> void
+  # The widgets placed so far
+  def widgets: () -> Array[FmrbUI::Widget]
+end
+class FmrbUI::Widget
+  # This widget's id
+  def id: () -> Symbol
+  # Left edge (canvas coordinates)
+  def x: () -> Integer
+  # Top edge (canvas coordinates)
+  def y: () -> Integer
+  # Width in pixels
+  def w: () -> Integer
+  # Height in pixels
+  def h: () -> Integer
+  # Whether the next flush redraws it
+  def dirty: () -> bool
+  # Whether it accepts clicks
+  def enabled: () -> bool
+  # Whether it is shown
+  def visible: () -> bool
+  # Text scale, fixed at creation
+  def text_size: () -> Integer
+  # Whether the point is inside
+  def hit?: (Integer px, Integer py) -> bool
+  # Move and resize (canvas coordinates)
+  def place: (Integer x, Integer y, Integer w, Integer h) -> void
+end
+class FmrbUI::Label < FmrbUI::Widget
+  # The text shown
+  def text: () -> String
+end
+class FmrbUI::Button < FmrbUI::Widget
+  # The button's text
+  def text: () -> String
+end
+class FmrbUI::Toggle < FmrbUI::Widget
+  # The text shown when off
+  def text: () -> String
+  # The text shown when on
+  def on_text: () -> String
+  # Whether it is on
+  def on?: () -> bool
+  # Switch it on or off
+  def set_on: (bool flag) -> void
+  # The radio group name
+  def group: () -> Symbol
+end
+class FmrbUI::TextField < FmrbUI::Widget
+  # What has been typed
+  def field_text: () -> String
+  # Whether it has the focus
+  def focused?: () -> bool
+end
+class FmrbUI::Enum < FmrbUI::Stepper
+  # The chosen string
+  def option_text: () -> String?
+end
+class FmrbUI::Stepper < FmrbUI::Widget
+  # The current value
+  def value: () -> Integer
+  # The lowest value
+  def min: () -> Integer
+  # The highest value
+  def max: () -> Integer
+  # How much one press moves the value
+  def step: () -> Integer
+  # The text shown
+  def text: () -> String
+  # Set the value
+  def set_value: (Integer v) -> bool
+  # Unit appended after the number
+  def suffix=: (String s) -> void
+end
+class FmrbUI::HitAreas
+  # Create an empty list
+  def self.new: () -> FmrbUI::HitAreas
+  # Empty the list
+  def clear: () -> FmrbUI::HitAreas
+  # Add a click target
+  def add: (untyped id, Integer x, Integer y, Integer w, Integer h) -> FmrbUI::HitAreas
+  # The target at a point
+  def at: (Integer x, Integer y) -> Array?
+  # The id of the target at a point
+  def id_at: (Integer x, Integer y) -> untyped
+end
+# hash.rbs
+class Hash
+  include Enumerable
+  # Perform equality comparison
+  def ==: (untyped other) -> bool
+  # Get value for specified key
+  def []: (untyped key) -> untyped
+  # Set value for specified key
+  def []=: (untyped key, untyped value) -> self
+  # Remove all elements from hash
+  def clear: () -> Hash
+  # Delete specified key
+  def delete: (untyped key) -> (untyped | nil)
+  # Execute block for each key and value
+  def each: () { (untyped key, untyped value) -> untyped } -> self
+  # Check if hash is empty
+  def empty?: () -> bool
+  # Check if specified key exists
+  def has_key?: (untyped key) -> bool
+  # Check if specified value exists
+  def has_value?: (untyped value) -> bool
+  # Return string representation for debugging
+  def inspect: () -> String
+  # Look the key up from the value
+  def key: (untyped value) -> (untyped | nil)
+  # Return all keys as array
+  def keys: () -> Array[untyped]
+  # Return number of elements in hash
+  def length: () -> Integer
+  # Return new hash merged with another hash
+  def merge: (Hash other) -> self
+  # Merge hash destructively
+  def merge!: (Hash other) -> self
+  # Return self as hash
+  def to_h: () -> self
+  # Return all values as array
+  def values: () -> Array[untyped]
+  # Make an empty hash
+  def self.new: () -> Hash
+end
+# integer.rbs
+class Integer
+  # Calculate modulo
+  def %: ((Integer | Float) other) -> (Integer | Float)
+  # Perform bitwise AND operation
+  def &: (Integer other) -> Integer
+  # Perform multiplication
+  def *: ((Integer | Float) other) -> (Integer | Float)
+  # Calculate power
+  def **: ((Integer | Float) other) -> Integer
+  # Perform addition
+  def +: ((Integer | Float) other) -> (Integer | Float)
+  # Unary plus operator. Returns self
+  def +@: () -> Integer
+  # Perform subtraction
+  def -: ((Integer | Float) other) -> (Integer | Float)
+  # Unary minus operator. Inverts sign
+  def -@: () -> Integer
+  # Perform division
+  def /: ((Integer | Float) other) -> (Integer | Float)
+  # Perform less than comparison
+  def <: ((Integer | Float) other) -> bool
+  # Perform left bit shift
+  def <<: (Integer other) -> Integer
+  # Perform less than or equal comparison
+  def <=: ((Integer | Float) other) -> bool
+  # Compare. Returns -1, 0 or 1
+  def <=>: ((Integer | untyped) other) -> Integer
+  # Perform equality comparison
+  def ==: (untyped other) -> bool
+  # Perform greater than comparison
+  def >: ((Integer | Float) other) -> bool
+  # Perform greater than or equal comparison
+  def >=: ((Integer | Float) other) -> bool
+  # Perform right bit shift
+  def >>: (Integer other) -> Integer
+  # Perform bitwise XOR operation
+  def ^: (Integer other) -> Integer
+  # Get value at specified bit position
+  def []: (untyped index) -> Integer
+  # Get absolute value
+  def abs: () -> Integer
+  # Return the character for this code
+  def chr: () -> String
+  # Run the block from self down to the argument
+  def downto: (Integer limit) { (Integer block_limit) -> untyped } -> Integer
+  # Execute block self times
+  def times: () { (Integer index) -> untyped } -> Integer
+  # Convert to floating point number
+  def to_f: () -> Float
+  # Return self as integer value
+  def to_i: () -> Integer
+  # Convert to string. Base can be specified with argument
+  def to_s: (?Integer base) -> String
+  # Perform bitwise OR operation
+  def |: (Integer other) -> Integer
+  # Perform bitwise NOT operation
+  def ~: () -> Integer
+end
+# kernel.rbs
+module Kernel
+  # Inspect and output object
+  def p: (*untyped objects) -> untyped
+  # Output object
+  def print: (*untyped objects) -> nil
+  # Output object with newline
+  def puts: (*untyped objects) -> nil
+  # Call the block that was given
+  def yield: (*untyped arguments) -> untyped
+  # Create Proc object
+  def proc: () { (untyped argument) -> untyped } -> Proc
+  # Create lambda expression
+  def lambda: () { (untyped argument) -> untyped } -> Proc
+  # The short spelling of lambda
+  def `->`: (untyped argument) { (untyped block_argument) -> untyped } -> Proc
+end
+# nil_class.rbs
+class NilClass
+  # Return logical NOT
+  def !: () -> bool
+  # Always returns false
+  def &: (untyped other) -> bool
+  # Equality as `case` uses it
+  def ===: (untyped other) -> bool
+  # Returns logical value of argument
+  def ^: (untyped other) -> bool
+  # Returns "nil"
+  def inspect: () -> String
+  # Returns true
+  def nil?: () -> bool
+  # Returns 0.0
+  def to_f: () -> Float
+  # Returns empty hash
+  def to_h: () -> Hash
+  # Returns 0
+  def to_i: () -> Integer
+  # Returns empty string
+  def to_s: () -> String
+  # Returns logical value of argument
+  def |: (untyped other) -> bool
+end
+# object.rbs
+class Object
+  include Kernel
+  # Comparison operator
+  def <=>: (untyped other) -> Integer
+  # Perform inequality comparison
+  def !=: (untyped other) -> bool
+  # Perform equality comparison
+  def ==: (untyped other) -> bool
+  # Judge case equality
+  def ===: (untyped other) -> bool
+  # Define a reader and a writer
+  def attr_accessor: (*Symbol names) -> nil
+  # Define a reader
+  def attr_reader: (*Symbol names) -> nil
+  # Whether a block was given
+  def block_given?: () -> bool
+  # Return object class
+  def class: () -> Class
+  # Duplicate object
+  def dup: () -> self
+  # End the app
+  def exit: (?Integer status) -> nil
+  # Mix a module in
+  def include: (*untyped modules) -> nil
+  # Add a module to this object alone
+  def extend: (*untyped modules) -> nil
+  # Return string representation for debugging
+  def inspect: () -> String
+  # Check if instance of specified class or module
+  def is_a?: (untyped class_or_module) -> bool
+  # Repeat forever
+  def loop: () { (nil value) -> untyped } -> nil
+  # Check if nil
+  def nil?: () -> bool
+  # Make what follows private
+  def private: (*Symbol names) -> nil
+  # Make what follows public
+  def public: (*Symbol names) -> nil
+  # Raise an exception
+  def raise: (?untyped exception, ?String message) -> bot
+  # Give other tasks a turn
+  def relinquish: () -> bool
+  # Wait, in seconds
+  def sleep: ((Integer | Float) duration) -> Integer
+  # Wait, in milliseconds
+  def sleep_ms: (Integer milliseconds) -> Integer
+  # Format a string
+  def sprintf: (String format, *untyped arguments) -> String
+  # Return string representation
+  def to_s: () -> String
+  # get object method list
+  def self.methods: () -> Array[Symbol]
+end
+# proc.rbs
+class Proc
+  # Call Proc
+  def call: (*untyped arguments) -> untyped
+  # Make a Proc
+  def self.new: () { (untyped argument) -> untyped } -> Proc
+end
+# range.rbs
+class Range < Enumerable
+  # Perform equality comparison
+  def ==: (untyped other) -> bool
+  # Check if value is included in range
+  def ===: (untyped object) -> bool
+  # Check if end value is excluded
+  def exclude_end?: () -> bool
+  # Return start value of range
+  def first: () -> untyped
+  # Return string representation for debugging
+  def inspect: () -> String
+  # Return end value of range
+  def last: () -> untyped
+  # Return string representation
+  def to_s: () -> String
+  # Execute block for each element in range
+  def each: () { (untyped element) -> untyped } -> self
+  # Make a Range
+  def self.new: (untyped first, untyped last, ?bool exclude_end) -> Range
+end
+# string.rbs
+class String
+  # Return logical NOT
+  def !: () -> bool
+  # Repeat string specified number of times
+  def *: (Integer count) -> String
+  # Concatenate strings
+  def +: (String other) -> String
+  # Check if lexicographically smaller
+  def <: (String other) -> bool
+  # Append string or character code
+  def <<: ((String | Integer) string_or_codepoint) -> String
+  # Check if lexicographically less than or equal
+  def <=: (String other) -> bool
+  # Compare lexicographically. Returns -1, 0 or 1
+  def <=>: (String other) -> Integer
+  # Perform equality comparison
+  def ==: (untyped other) -> bool
+  # Perform equality comparison (for case statements)
+  def ===: (untyped other) -> bool
+  # Check if lexicographically greater
+  def >: (String other) -> bool
+  # Check if lexicographically greater than or equal
+  def >=: (String other) -> bool
+  # Get character or substring at specified position
+  def []: (untyped index_or_range) -> (String | nil)
+  # Replace the character or substring there
+  def []=: (untyped index_or_range, String replacement) -> String
+  # Internal argument check for ljust and rjust
+  def __ljust_rjust_argcheck: ((Integer | String) width_or_padding) -> nil
+  # Return byte sequence of string as array
+  def bytes: () -> Array[Integer]
+  # Return the size in bytes, not characters
+  def bytesize: () -> Integer
+  # Return characters of string as array
+  def chars: () -> Array[String]
+  # Return string with trailing newline removed
+  def chomp: () -> String
+  # Remove trailing newline destructively
+  def chomp!: () -> (String | nil)
+  # Clear string contents
+  def clear: () -> String
+  # Return string converted to lowercase
+  def downcase: () -> String
+  # Convert to lowercase destructively
+  def downcase!: () -> (String | nil)
+  # Execute block for each byte
+  def each_byte: () { (Integer byte) -> untyped } -> self
+  # Execute block for each character
+  def each_char: () { (String character) -> untyped } -> self
+  # Execute block for each line
+  def each_line: (?String separator, ?chomp: bool) { (String line) -> untyped } -> String
+  # Check if string is empty
+  def empty?: () -> bool
+  # Check if ends with specified string
+  def end_with?: (String suffix) -> bool
+  # Get byte value at specified position
+  def getbyte: (Integer index) -> (Integer | nil)
+  # Set the byte value at a position
+  def setbyte: (Integer index, Integer byte) -> Integer
+  # Check if contains specified string
+  def include?: (String other) -> bool
+  # Return first position of specified string
+  def index: ((String | Integer) substring_or_codepoint, ?Integer offset) -> (Integer | nil)
+  # Return string representation for debugging
+  def inspect: () -> String
+  # Convert to symbol
+  def intern: () -> Symbol
+  # Return string length
+  def length: () -> Integer
+  # Return string length
+  def size: () -> Integer
+  # Return string left-justified to specified width
+  def ljust: (Integer width, ?String padding) -> String
+  # Return string with leading whitespace removed
+  def lstrip: () -> String
+  # Remove leading whitespace destructively
+  def lstrip!: () -> (String | nil)
+  # Return character code of first character
+  def ord: () -> Integer
+  # Return string right-justified to specified width
+  def rjust: (Integer width, ?String padding) -> String
+  # Return string with trailing whitespace removed
+  def rstrip: () -> String
+  # Remove trailing whitespace destructively
+  def rstrip!: () -> (String | nil)
+  # Get character or substring at specified position
+  def slice: (untyped index_or_range) -> (String | nil)
+  # Split by delimiter and return array
+  def split: (?String separator, ?Integer limit) -> Array[String]
+  # Check if starts with specified string
+  def start_with?: (String prefix) -> bool
+  # Return the string without surrounding whitespace
+  def strip: () -> String
+  # Remove leading and trailing whitespace destructively
+  def strip!: () -> (String | nil)
+  # Convert to floating point number
+  def to_f: () -> Float
+  # Convert to integer
+  def to_i: (?Integer base) -> Integer
+  # Return self as string
+  def to_s: () -> String
+  # Convert to symbol
+  def to_sym: () -> Symbol
+  # Return string with characters replaced
+  def tr: (String source, String replacement) -> String
+  # Replace characters destructively
+  def tr!: (String source, String replacement) -> (String | nil)
+  # Return string converted to uppercase
+  def upcase: () -> String
+  # Convert to uppercase destructively
+  def upcase!: () -> (String | nil)
+end
+# symbol.rbs
+class Symbol
+  # Compare symbols
+  def <=>: ((Symbol | untyped) other) -> Integer
+  # Perform equality comparison
+  def ==: (untyped other) -> bool
+  # Perform equality comparison (for case statements)
+  def ===: (untyped other) -> bool
+  # Return string representation for debugging
+  def inspect: () -> String
+  # Return self as symbol
+  def to_sym: () -> Symbol
+end
+# true_class.rbs
+class TrueClass < Bool
+end
+# untyped.rbs
+class Untyped
+  # Convert to an integer
+  def to_i: () -> Integer
+  # Convert to an integer
+  def to_int: () -> Integer
+  # Convert to a float
+  def to_f: () -> Float
+  # Convert to a string
+  def to_s: () -> String
+end

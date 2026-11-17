@@ -1,0 +1,68 @@
+{
+  "fw": "3.1.0",
+  "made_from": {
+    "core": "2c012d9102a5c05d00c5948fff8085905bebb2e2",
+    "root": "a90feead36cde9f31f2050591e93e1d67cc4f4f6",
+    "asterism": "da1c382e423ebda735c7c758825fc824addc6d96"
+  },
+  "made_at": "2026-11-17T14:40:13Z",
+  "files": [
+    {
+      "path": "api.rbs",
+      "bytes": 61138,
+      "tokens_est": 15285
+    },
+    {
+      "path": "app_guide.md",
+      "bytes": 17955,
+      "tokens_est": 5384
+    },
+    {
+      "path": "checks.json",
+      "bytes": 7598,
+      "tokens_est": 1900
+    },
+    {
+      "path": "pitfalls.tsv",
+      "bytes": 2847,
+      "tokens_est": 712
+    },
+    {
+      "path": "rules_ja.md",
+      "bytes": 3676,
+      "tokens_est": 1179
+    },
+    {
+      "path": "samples/piano.app.rb",
+      "bytes": 7069,
+      "tokens_est": 1767
+    },
+    {
+      "path": "samples/pub_demo.app.rb",
+      "bytes": 1380,
+      "tokens_est": 345
+    },
+    {
+      "path": "samples/sub_demo.app.rb",
+      "bytes": 1119,
+      "tokens_est": 280
+    },
+    {
+      "path": "templates/fullscreen.rb",
+      "bytes": 1299,
+      "tokens_est": 325
+    },
+    {
+      "path": "templates/window.rb",
+      "bytes": 931,
+      "tokens_est": 233
+    },
+    {
+      "path": "templates/worker.rb",
+      "bytes": 1452,
+      "tokens_est": 363
+    }
+  ],
+  "bytes": 106464,
+  "tokens_est": 27773
+}

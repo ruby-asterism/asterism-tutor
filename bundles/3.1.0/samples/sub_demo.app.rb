@@ -1,0 +1,53 @@
+# PubSub Demo - Subscriber
+# Subscribes to "demo" topic and displays received messages
+
+class SubDemoApp < FmrbApp
+  TOPIC = "demo"
+
+  def on_create
+    @count = 0
+    @last_msg = ""
+    subscribe(TOPIC)
+    draw_screen
+  end
+
+  def draw_screen
+    clear_user_area
+    @gfx.draw_text(4, 4,
+                   "Waiting...", theme_border) if @count == 0
+    if @count > 0
+      @gfx.draw_text(4, 4,
+                     "Received: #{@count}", FmrbGfx::GREEN)
+      @gfx.draw_text(4, 20,
+                     @last_msg, FmrbGfx::YELLOW)
+    end
+    draw_window_frame
+    @gfx.present
+  end
+
+  def on_control(msg)
+    if msg["cmd"] == "topic_data" && msg["topic"] == TOPIC
+      @count += 1
+      data = msg["data"]
+      if data
+        @last_msg = "n=#{data["n"]} #{data["msg"]}"
+      end
+      draw_screen
+    end
+  end
+
+  def on_update
+    100
+  end
+
+  # Started from a checkpoint image (doc/checkpoint; this app is not declared
+  # movable yet): the window is new and empty, and this app draws only when
+  # something happens.
+  def on_restore
+    draw_screen
+  end
+
+  def on_destroy
+    unsubscribe(TOPIC)
+  end
+end

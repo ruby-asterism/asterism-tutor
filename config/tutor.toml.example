@@ -1,0 +1,49 @@
+# fmrb-tutor settings. Every key is optional (the defaults are shown).
+# The LLM key is NOT written here: give it as the environment variable
+# ANTHROPIC_API_KEY of the process that runs fmrb-tutor.
+
+[network]
+router = "tcp/127.0.0.1:7447"     # the Asterism router (the sim's zenohd is tcp/127.0.0.1:7447)
+node = "tutor"                     # this gem's node ID: the device finds */tutor/helper
+credentials = ""                   # an Asterism console's .tar for a TLS router (then router may be "")
+devices = ["*"]                    # the node IDs that may ask, e.g. ["fmruby-a1b2c3"]; "*" = any
+name = "AI helper"                 # the name the device shows
+
+[llm]
+provider = "fake"                  # "fake" (no LLM, for tests) or "anthropic"
+model = "claude-haiku-5-5"         # or "claude-sonnet-5-5"
+max_tokens = 8000
+effort = ""                        # "", "low", "medium", "high" ("" = the model's default)
+timeout_s = 120
+
+# USD per million tokens, for the daily cost limit (an estimate)
+[llm.prices.claude-haiku-5-5]
+input = 0.10
+cache_write = 0.125
+cache_read = 0.01
+output = 0.50
+
+[limits]
+per_device_per_day = 50
+cost_per_day_usd = 1.0             # all devices together
+retries = 2                        # times the LLM is asked to fix code that failed the checks
+
+[modes]
+make = true                        # false: the device cannot ask for a whole app
+fix = true                         # false: the device cannot ask to have its code fixed
+
+[talk]
+turns = 4                          # the last turns sent with the next request
+forget_min = 30                    # forgotten after this many minutes unused
+
+[store]
+result_hours = 24                  # results kept for a device that went away
+log_dir = "~/.local/share/fmrb-tutor/log"
+doc_max = 65536
+piece = 8192
+
+[bundle]
+dir = ""                           # "" = the bundles in the gem
+
+[jobs]
+workers = 2
