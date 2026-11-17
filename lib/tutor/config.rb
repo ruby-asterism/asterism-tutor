@@ -14,7 +14,7 @@ module Tutor
       },
       "llm" => {
         "provider" => "fake",          # "fake" or "anthropic"
-        "model" => "claude-sonnet-5-5",
+        "model" => "claude-haiku-5-5",
         "max_tokens" => 8000,
         "effort" => "",                # "", "low", "medium", "high" ("": the model's default)
         "timeout_s" => 120,

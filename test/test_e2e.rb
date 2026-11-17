@@ -75,8 +75,6 @@ class TestE2E < Minitest::Test
       name = "test helper"
       [llm]
       provider = "fake"
-      [limits]
-      cost_per_day_usd = 1000  # the fake counts the whole bundle as a cache write each time
       [store]
       log_dir = "#{WORK}/log_main"
     TOML
@@ -89,7 +87,6 @@ class TestE2E < Minitest::Test
       provider = "fake"
       [limits]
       per_device_per_day = 3
-      cost_per_day_usd = 1000
       [modes]
       make = false
       fix = false
