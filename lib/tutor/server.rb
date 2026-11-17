@@ -46,6 +46,12 @@ module Tutor
         @net = net
         path = attach(net)
         warn "fmrb-tutor: #{path} on #{locator || 'the credentials router'} (llm: #{@cfg.dig('llm', 'provider')})"
+        model = @cfg.dig("llm", "model")
+        warn "fmrb-tutor: model #{model}, #{@cfg.dig('limits', 'per_device_per_day')} requests a device a day, " \
+             "$#{@cfg.dig('limits', 'cost_per_day_usd')} a day in all"
+        unless @cfg.dig("llm", "prices", model)
+          warn "fmrb-tutor: no price for #{model} in llm.prices; the cost limit will not count it"
+        end
         $stderr.flush
         net.run
       end

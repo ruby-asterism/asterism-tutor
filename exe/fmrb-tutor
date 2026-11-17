@@ -2,6 +2,7 @@
 # Starts the AI helper as an Asterism application.
 #
 #   fmrb-tutor [--config tutor.toml] [--router tcp/127.0.0.1:7447] [--node tutor] [--llm fake|anthropic]
+#              [--model ID] [--per-day N] [--cost-per-day USD]
 #
 # The LLM key is read from the environment (ANTHROPIC_API_KEY) only.
 require "optparse"
@@ -15,6 +16,9 @@ OptionParser.new do |o|
   o.on("--router LOCATOR", "the Asterism router, e.g. tcp/127.0.0.1:7447") { (over["network"] ||= {})["router"] = _1 }
   o.on("--node ID", "this node's ID (default tutor)") { (over["network"] ||= {})["node"] = _1 }
   o.on("--llm PROVIDER", "fake or anthropic") { (over["llm"] ||= {})["provider"] = _1 }
+  o.on("--model ID", "the LLM model, e.g. claude-haiku-5-5 or claude-sonnet-5-5") { (over["llm"] ||= {})["model"] = _1 }
+  o.on("--per-day N", Integer, "requests one device may make a day") { (over["limits"] ||= {})["per_device_per_day"] = _1 }
+  o.on("--cost-per-day USD", Float, "estimated cost all devices may use a day") { (over["limits"] ||= {})["cost_per_day_usd"] = _1 }
   o.on("--log-dir DIR", "where the JSONL records go") { (over["store"] ||= {})["log_dir"] = _1 }
 end.parse!
 

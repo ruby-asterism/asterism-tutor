@@ -43,6 +43,14 @@ bundle exec exe/fmrb-tutor --config tutor.toml --llm fake
 ANTHROPIC_API_KEY="$(cat path/to/anthropic_api_key)" bundle exec exe/fmrb-tutor --config tutor.toml --llm anthropic
 ```
 
+モデルと上限は、設定のファイル (`llm.model`・`limits.*`) でも、起こすときのオプションでも変えられる
+(オプションが先)。起こしたときに、今のモデルと上限を 1 行で出す。
+
+```
+bundle exec exe/fmrb-tutor --config tutor.toml --llm anthropic --model claude-sonnet-5-5 --per-day 30 --cost-per-day 2
+```
+
+
 - ルータは設定の `network.router`。sim の stack の zenohd につなぐなら `tcp/127.0.0.1:7447`
   (sim の中の端末からは `tcp/zenohd:7447` に見える同じルータ)。
 - 網の上では `<node>/tutor/helper` になる (既定のノード ID は `tutor`)。端末は `*/tutor/helper` で探す。
