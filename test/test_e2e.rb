@@ -4,15 +4,15 @@ require "open3"
 require "fileutils"
 require_relative "sender"
 
-# The gem as a process (exe/fmrb-tutor, fake LLM) on a local router, called
+# The gem as a process (exe/asterism-tutor, fake LLM) on a local router, called
 # by test/sender.rb the way a device will. `rake e2e` starts the router.
 #
 # Two gems: "tutor-test" (the devices listed, everything on) and
 # "tutor-off" (any device, make and fix turned off, 3 requests a day).
 class TestE2E < Minitest::Test
   ROUTER = ENV["TUTOR_TEST_ROUTER"].to_s
-  WORK = Dir.mktmpdir("fmrb-tutor-e2e")
-  EXE = File.expand_path("../exe/fmrb-tutor", __dir__)
+  WORK = Dir.mktmpdir("asterism-tutor-e2e")
+  EXE = File.expand_path("../exe/asterism-tutor", __dir__)
   MAIN = "tutor-test/tutor/helper".freeze
   OFF = "tutor-off/tutor/helper".freeze
   C = Tutor::Check
@@ -48,7 +48,7 @@ class TestE2E < Minitest::Test
     _in, out, wait = Open3.popen2e("bundle", "exec", "ruby", EXE, "--config", cfg)
     line = nil
     t = Time.now
-    until (line = out.gets).nil? || line.include?("fmrb-tutor: ")
+    until (line = out.gets).nil? || line.include?("asterism-tutor: ")
       raise "#{name} did not start" if Time.now - t > 20
     end
     raise "#{name} ended: #{out.read}" if line.nil?

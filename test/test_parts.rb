@@ -49,7 +49,7 @@ class TestParts < Minitest::Test
     assert_equal b.text, Tutor::Bundle.new(ROOT, "3.1.0").text # the same bytes each time (the prompt cache)
   end
 
-  TMP = Dir.mktmpdir("fmrb-tutor-unit")
+  TMP = Dir.mktmpdir("asterism-tutor-unit")
   Minitest.after_run { FileUtils.rm_rf(TMP) }
 
   def cfg(over = {})

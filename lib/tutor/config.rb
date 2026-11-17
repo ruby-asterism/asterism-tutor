@@ -33,7 +33,7 @@ module Tutor
       "talk" => { "turns" => 4, "forget_min" => 30 },
       "store" => {
         "result_hours" => 24,
-        "log_dir" => "~/.local/share/fmrb-tutor/log",
+        "log_dir" => "~/.local/share/asterism-tutor/log",
         "doc_max" => 65_536,
         "piece" => 8192,
         "text_max" => 2048,

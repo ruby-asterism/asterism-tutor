@@ -1,12 +1,12 @@
-# fmrb-tutor (仮の名前)
+# asterism-tutor
 
 Family mruby の「AI に聞く」の、親の PC で動く側。端末 (P4-Nano・Tab5) の AI 連携アプリから
 Asterism で頼みを受け、LLM を呼び、コードを検査して返す CRuby の gem。
 
-> 状態: 試作 (fmruby-core の doc/ai_coding の A1)。公開していない。名前・置き場・ライセンスは未定。
+> 状態: 試作 (fmruby-core の doc/ai_coding)。動きも設定の形も変わる。
 
 ```
-端末 (AI 連携アプリ) --Asterism のルータ--> fmrb-tutor (この gem) --> LLM の API
+端末 (AI 連携アプリ) --Asterism のルータ--> asterism-tutor (この gem) --> LLM の API
                                               鍵・知識の束・検査・記録・上限
 ```
 
@@ -19,7 +19,7 @@ Asterism で頼みを受け、LLM を呼び、コードを検査して返す CRu
   この gem の知識の束 (Family mruby のアプリの書き方・API の型・罠の表・見本。子どもの情報は入っていない)。
   端末の名前 (Asterism のノード ID) やファイルの置き場所は、文書の名前を除いて送らない。
 - **記録**: 頼み・送った文書・LLM への指示・答え・使った量 (usage) と見積もりの費用・検査の結果を、
-  全部 JSONL で `~/.local/share/fmrb-tutor/log/tutor-YYYY-MM-DD.jsonl` に残す。gem は消さない。
+  全部 JSONL で `~/.local/share/asterism-tutor/log/tutor-YYYY-MM-DD.jsonl` に残す。gem は消さない。
   親はこれを読める (1 行 1 件の JSON。`ev` が `ask`・`llm`・`check`・`result`・`refused` など)。
 - **できることを親が決める**: 受け付ける端末 (`devices`)、1 日の回数と費用の上限、「作る」「直してもらう」を止める。
   AI の役目と決まり (子ども向けの言葉づかい、プログラムの話以外は断る、AI であると言う、分からないことは
@@ -38,16 +38,16 @@ Asterism で頼みを受け、LLM を呼び、コードを検査して返す CRu
 bundle install
 cp config/tutor.toml.example tutor.toml      # 直すところだけ書けばよい
 # LLM なし (偽物の LLM) で動かす
-bundle exec exe/fmrb-tutor --config tutor.toml --llm fake
+bundle exec exe/asterism-tutor --config tutor.toml --llm fake
 # 本物の LLM (Anthropic) で動かす: 鍵は環境変数で渡すだけ
-ANTHROPIC_API_KEY="$(cat path/to/anthropic_api_key)" bundle exec exe/fmrb-tutor --config tutor.toml --llm anthropic
+ANTHROPIC_API_KEY="$(cat path/to/anthropic_api_key)" bundle exec exe/asterism-tutor --config tutor.toml --llm anthropic
 ```
 
 モデルと上限は、設定のファイル (`llm.model`・`limits.*`) でも、起こすときのオプションでも変えられる
 (オプションが先)。起こしたときに、今のモデルと上限を 1 行で出す。
 
 ```
-bundle exec exe/fmrb-tutor --config tutor.toml --llm anthropic --model claude-sonnet-5-5 --per-day 30 --cost-per-day 2
+bundle exec exe/asterism-tutor --config tutor.toml --llm anthropic --model claude-sonnet-5-5 --per-day 30 --cost-per-day 2
 ```
 
 
@@ -78,7 +78,7 @@ bundle exec exe/fmrb-tutor --config tutor.toml --llm anthropic --model claude-so
 | `modes.make` / `modes.fix` | true | 「作る」「直してもらう」を止める |
 | `talk.turns` / `talk.forget_min` | 4 / 30 | 会話の続きに付ける往復の数と、忘れるまでの分 |
 | `store.result_hours` | 24 | 端末が取りに来ない結果を持つ時間 |
-| `store.log_dir` | `~/.local/share/fmrb-tutor/log` | 記録の置き場 |
+| `store.log_dir` | `~/.local/share/asterism-tutor/log` | 記録の置き場 |
 
 ## 端末から呼ぶ形 (`<node>/tutor/helper`)
 
@@ -103,7 +103,7 @@ bundle exec exe/fmrb-tutor --config tutor.toml --llm anthropic --model claude-so
 ## 試験
 
 ```sh
-bundle exec rake test      # 単体の試験 + ルータ (docker の fmrb_tutor_zenohd、127.0.0.1:17520) を立てた通しの試験。LLM は全部偽物
+bundle exec rake test      # 単体の試験 + ルータ (docker の asterism_tutor_zenohd、127.0.0.1:17520) を立てた通しの試験。LLM は全部偽物
 bundle exec rake unit      # ルータなしの分だけ
 ruby test/sender.rb --router tcp/127.0.0.1:17520 --node fmruby-test01 ask "変数って何?"   # 手で 1 回頼む (端末の代わり)
 ```
