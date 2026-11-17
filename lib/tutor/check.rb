@@ -48,6 +48,7 @@ module Tutor
         name = n.name.to_s
         return ".#{name}" if n.receiver && c["calls"]&.include?(name)
         return name if n.receiver.nil? && c["calls0"]&.include?(name)
+        return ".#{name} without a block" if n.receiver && n.block.nil? && c["calls_noblock"]&.include?(name)
       end
       if c["endless_range"] && n.is_a?(Prism::RangeNode) && n.right.nil?
         return "endless range"

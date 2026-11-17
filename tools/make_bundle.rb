@@ -152,7 +152,11 @@ PATTERNS = {
   "array_group_by" => { calls: %w[group_by] },
   "array_sort_by" => { calls: %w[sort_by] },
   "array_cycle" => { calls: %w[cycle] },
-  "range_step" => { calls: %w[step] },
+  "range_step" => { calls_noblock: %w[step] },
+  # No Enumerator on the device: the iterators without a block fail there
+  # (each_with_index.map, times.map, ...).
+  "enumerator_next" => { calls_noblock: %w[each each_with_index each_index map collect select reject times upto downto
+                                           each_char each_byte each_line with_index each_with_object step] },
   "range_endless" => { endless_range: true },
   "enumerator_lazy" => { calls: %w[lazy] },
   "enumerator_new" => { consts: %w[Enumerator] },
@@ -178,6 +182,13 @@ SKILL_ROWS = [
 ].freeze
 
 feature_md = File.read(File.join(asterism, "docs/ruby_features.md"))
+# The error each probe gave on the application VM (the list under the table):
+# it tells what exactly is missing (kernel_rand: only the constant Random).
+why = {}
+feature_md.each_line do |l|
+  next unless (m = l.match(/\A- `([^`]+)` on ([^:]*app VM std[^:]*): (.*)$/))
+  why[m[1]] = m[3].sub("RubyProfile::Runner::", "").sub(" for RubyProfile::Runner", "").strip
+end
 rows = []
 checks = []
 feature_md.each_line do |l|
@@ -187,16 +198,17 @@ feature_md.each_line do |l|
   next unless %w[ng differs].include?(status)
   id = cells[1][/`([^`]+)`/, 1]
   desc = cells[1].sub(/`[^`]+`\s*/, "")
-  rows << [id, desc, status]
+  rows << [id, desc, status, why[id].to_s]
   pat = PATTERNS[id]
   checks << { "id" => id, "what" => desc, "status" => status }.merge(pat.transform_keys(&:to_s)) if pat && !pat.empty?
 end
 SKILL_ROWS.each do |id, desc, status, pat|
-  rows << [id, desc, status]
+  rows << [id, desc, status, ""]
   checks << { "id" => id, "what" => desc, "status" => status }.merge(pat.transform_keys(&:to_s))
 end
 File.write(File.join(dir, "pitfalls.tsv"),
-           "# id\twhat\tapp VM (ng: missing or does not compile, differs: runs but gives another answer)\n" +
+           "# id\twhat\tapp VM (ng: missing or does not compile, differs: runs but gives another answer)\t" \
+           "the error the probe gave (what exactly is missing)\n" +
            rows.map { _1.join("\t") }.join("\n") + "\n")
 File.write(File.join(dir, "checks.json"), JSON.pretty_generate({ "fw" => fw, "checks" => checks }) + "\n")
 

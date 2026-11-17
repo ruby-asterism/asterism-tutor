@@ -5,7 +5,7 @@
     "root": "a90feead36cde9f31f2050591e93e1d67cc4f4f6",
     "asterism": "da1c382e423ebda735c7c758825fc824addc6d96"
   },
-  "made_at": "2026-11-17T14:40:13Z",
+  "made_at": "2026-11-17T14:42:16Z",
   "files": [
     {
       "path": "api.rbs",
@@ -19,18 +19,18 @@
     },
     {
       "path": "checks.json",
-      "bytes": 7598,
-      "tokens_est": 1900
+      "bytes": 8077,
+      "tokens_est": 2019
     },
     {
       "path": "pitfalls.tsv",
-      "bytes": 2847,
-      "tokens_est": 712
+      "bytes": 5846,
+      "tokens_est": 1462
     },
     {
       "path": "rules_ja.md",
-      "bytes": 3676,
-      "tokens_est": 1179
+      "bytes": 3897,
+      "tokens_est": 1250
     },
     {
       "path": "samples/piano.app.rb",
@@ -63,6 +63,6 @@
       "tokens_est": 363
     }
   ],
-  "bytes": 106464,
-  "tokens_est": 27773
+  "bytes": 110163,
+  "tokens_est": 28713
 }

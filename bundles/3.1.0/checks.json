@@ -276,7 +276,7 @@
       "id": "range_step",
       "what": "Integer#step(to, by).to_a",
       "status": "ng",
-      "calls": [
+      "calls_noblock": [
         "step"
       ]
     },
@@ -285,6 +285,29 @@
       "what": "endless range (5..).first(2)",
       "status": "ng",
       "endless_range": true
+    },
+    {
+      "id": "enumerator_next",
+      "what": "external enumerator next / StopIteration",
+      "status": "ng",
+      "calls_noblock": [
+        "each",
+        "each_with_index",
+        "each_index",
+        "map",
+        "collect",
+        "select",
+        "reject",
+        "times",
+        "upto",
+        "downto",
+        "each_char",
+        "each_byte",
+        "each_line",
+        "with_index",
+        "each_with_object",
+        "step"
+      ]
     },
     {
       "id": "enumerator_lazy",

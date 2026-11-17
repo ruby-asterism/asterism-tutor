@@ -1,71 +1,71 @@
-# id	what	app VM (ng: missing or does not compile, differs: runs but gives another answer)
-regexp_literal	Regexp literal and =~	ng
-regexp_class	Regexp.new / match?	ng
-pattern_hash_rest	in {a:, **rest}	differs
-pattern_pin_block	^pin of an outer local inside a block	differs
-pattern_pin_expr	^(expression)	differs
-pattern_const_pattern	Const[...] checks the constant	differs
-module_name	Module#name	ng
-struct	Struct.new	ng
-data_define	Data.define	ng
-set	Set without require	ng
-protected_method	protected method callable from same class	ng
-method_object	method(:x).call and arity	ng
-class_eval_string	class_eval with a string	ng
-instance_exec	instance_exec with an argument	ng
-kernel_proc	Kernel#proc	ng
-curry	Proc#curry	ng
-exception_cause	Exception#cause	ng
-catch_throw	catch / throw	ng
-rescue_modifier_bang	$! in a rescue modifier	ng
-string_literal_magic_frozen	frozen_string_literal magic comment	differs
-string_b	String#b and encoding	ng
-string_force_encoding	force_encoding	ng
-string_scan_regexp	scan with a regexp	ng
-string_inspect_escape	inspect of control and non-ASCII	differs
-integer_bignum	2**64 (arbitrary precision)	ng
-nil_to_i	nil.to_i	ng
-nil_to_a	nil.to_a	ng
-rational	Rational literal 1r / 3	ng
-complex	Complex literal 1 + 2i	ng
-integer_digits	Integer#digits	ng
-integer_pow_mod	Integer#pow(b, mod)	ng
-integer_bit_length	Integer#bit_length	ng
-integer_clamp	Comparable#clamp on Integer	ng
-hash_transform_values	Hash#transform_values	ng
-hash_dig	Hash#dig	ng
-hash_compare_by_identity	compare_by_identity	ng
-hash_count	Hash#count with a block	ng
-hash_min_by	Hash#min_by	ng
-hash_sum	Hash#sum with a block	ng
-array_each_slice	each_slice	ng
-array_each_cons	each_cons	ng
-array_tally	tally	ng
-array_filter_map	filter_map	ng
-array_sum	Array#sum	ng
-array_minmax	minmax	ng
-array_zip	zip	ng
-array_flat_map	flat_map	ng
-array_group_by	group_by	ng
-array_sort_by	sort_by	ng
-array_cycle	cycle.first(n)	ng
-range_step	Integer#step(to, by).to_a	ng
-range_endless	endless range (5..).first(2)	ng
-range_sum	Range#sum	ng
-enumerator_next	external enumerator next / StopIteration	ng
-enumerator_lazy	lazy.map.select.first	ng
-enumerator_new	Enumerator.new with a yielder	ng
-fiber	Fiber.new / resume / yield	ng
-thread	Thread.new.value	ng
-mutex	Mutex#synchronize	ng
-process_clock	Process.clock_gettime(MONOTONIC)	ng
-kernel_rand	rand(10) and Random.new(1)	ng
-object_then	then	ng
-object_tap	tap	ng
-object_itself	itself	ng
-recursion_1000	Ruby recursion 1000 deep	ng
-skill_defined	defined? is not there	ng
-skill_binread	File.binread is not there (File.open(path, "rb") and read)	ng
-skill_pack	Array#pack is not there ("\x00" * n with setbyte / getbyte)	ng
-skill_multi_index	a[i], a[j] = a[j], a[i] (array elements on the left of a multiple assignment) breaks; use a temporary	differs
-codegen_begin_end	BEGIN {} / END {}, flip-flops and alias of globals do not compile	ng
+# id	what	app VM (ng: missing or does not compile, differs: runs but gives another answer)	the error the probe gave (what exactly is missing)
+regexp_literal	Regexp literal and =~	ng	NameError: uninitialized constant Regexp
+regexp_class	Regexp.new / match?	ng	NameError: uninitialized constant Regexp
+pattern_hash_rest	in {a:, **rest}	differs	{b: 2}
+pattern_pin_block	^pin of an outer local inside a block	differs	[false]
+pattern_pin_expr	^(expression)	differs	false
+pattern_const_pattern	Const[...] checks the constant	differs	true
+module_name	Module#name	ng	NoMethodError: undefined method 'name' for Class
+struct	Struct.new	ng	NameError: uninitialized constant Struct
+data_define	Data.define	ng	NameError: uninitialized constant Data
+set	Set without require	ng	NameError: uninitialized constant Set
+protected_method	protected method callable from same class	ng	NoMethodError: protected method 'v' called for RpPr...
+method_object	method(:x).call and arity	ng	NoMethodError: undefined method 'method'
+class_eval_string	class_eval with a string	ng	NotImplementedError: module_eval/class_eval with string not implemented
+instance_exec	instance_exec with an argument	ng	NoMethodError: undefined method 'instance_exec' for Object
+kernel_proc	Kernel#proc	ng	NoMethodError: undefined method 'proc'
+curry	Proc#curry	ng	NoMethodError: undefined method 'curry' for Proc
+exception_cause	Exception#cause	ng	NoMethodError: undefined method 'cause' for RuntimeError
+catch_throw	catch / throw	ng	NoMethodError: undefined method 'catch'
+rescue_modifier_bang	$! in a rescue modifier	ng	NoMethodError: undefined method 'message' for NilClass
+string_literal_magic_frozen	frozen_string_literal magic comment	differs	false
+string_b	String#b and encoding	ng	NoMethodError: undefined method 'encoding' for String
+string_force_encoding	force_encoding	ng	NoMethodError: undefined method 'force_encoding' for String
+string_scan_regexp	scan with a regexp	ng	NameError: uninitialized constant Regexp
+string_inspect_escape	inspect of control and non-ASCII	differs	"\"a\\n\\x01\""
+integer_bignum	2**64 (arbitrary precision)	ng	RangeError: integer overflow in power
+nil_to_i	nil.to_i	ng	NoMethodError: undefined method 'to_i' for NilClass
+nil_to_a	nil.to_a	ng	NoMethodError: undefined method 'to_a' for NilClass
+rational	Rational literal 1r / 3	ng	NoMethodError: undefined method 'Rational'
+complex	Complex literal 1 + 2i	ng	NoMethodError: undefined method 'Complex'
+integer_digits	Integer#digits	ng	NoMethodError: undefined method 'digits' for Integer
+integer_pow_mod	Integer#pow(b, mod)	ng	NoMethodError: undefined method 'pow' for Integer
+integer_bit_length	Integer#bit_length	ng	NoMethodError: undefined method 'bit_length' for Integer
+integer_clamp	Comparable#clamp on Integer	ng	NoMethodError: undefined method 'clamp' for Integer
+hash_transform_values	Hash#transform_values	ng	NoMethodError: undefined method 'transform_values' for Hash
+hash_dig	Hash#dig	ng	NoMethodError: undefined method 'dig' for Hash
+hash_compare_by_identity	compare_by_identity	ng	NoMethodError: undefined method 'compare_by_identity' for Hash
+hash_count	Hash#count with a block	ng	NoMethodError: undefined method 'count' for Hash
+hash_min_by	Hash#min_by	ng	NoMethodError: undefined method 'min_by' for Hash
+hash_sum	Hash#sum with a block	ng	NoMethodError: undefined method 'sum' for Hash
+array_each_slice	each_slice	ng	NoMethodError: undefined method 'each_slice' for Array
+array_each_cons	each_cons	ng	NoMethodError: undefined method 'each_cons' for Array
+array_tally	tally	ng	NoMethodError: undefined method 'tally' for Array
+array_filter_map	filter_map	ng	NoMethodError: undefined method 'filter_map' for Array
+array_sum	Array#sum	ng	NoMethodError: undefined method 'sum' for Array
+array_minmax	minmax	ng	NoMethodError: undefined method 'minmax' for Array
+array_zip	zip	ng	NoMethodError: undefined method 'zip' for Array
+array_flat_map	flat_map	ng	NoMethodError: undefined method 'flat_map' for Array
+array_group_by	group_by	ng	NoMethodError: undefined method 'group_by' for Array
+array_sort_by	sort_by	ng	NoMethodError: undefined method 'sort_by' for Array
+array_cycle	cycle.first(n)	ng	NoMethodError: undefined method 'cycle' for Array
+range_step	Integer#step(to, by).to_a	ng	NotImplementedError: fiber required for enumerator
+range_endless	endless range (5..).first(2)	ng	ArgumentError: wrong number of arguments (given 1, expected 0)
+range_sum	Range#sum	ng	NoMethodError: undefined method 'sum' for Range
+enumerator_next	external enumerator next / StopIteration	ng	NotImplementedError: fiber required for enumerator
+enumerator_lazy	lazy.map.select.first	ng	NoMethodError: undefined method 'lazy' for Range
+enumerator_new	Enumerator.new with a yielder	ng	NameError: uninitialized constant Enumerator
+fiber	Fiber.new / resume / yield	ng	NameError: uninitialized constant Fiber
+thread	Thread.new.value	ng	NameError: uninitialized constant Thread
+mutex	Mutex#synchronize	ng	NameError: uninitialized constant Mutex
+process_clock	Process.clock_gettime(MONOTONIC)	ng	NameError: uninitialized constant Process
+kernel_rand	rand(10) and Random.new(1)	ng	NameError: uninitialized constant Random
+object_then	then	ng	NoMethodError: undefined method 'then' for Integer
+object_tap	tap	ng	NoMethodError: undefined method 'tap' for Integer
+object_itself	itself	ng	NoMethodError: undefined method 'itself' for Integer
+recursion_1000	Ruby recursion 1000 deep	ng	SystemStackError: SystemStackError
+skill_defined	defined? is not there	ng	
+skill_binread	File.binread is not there (File.open(path, "rb") and read)	ng	
+skill_pack	Array#pack is not there ("\x00" * n with setbyte / getbyte)	ng	
+skill_multi_index	a[i], a[j] = a[j], a[i] (array elements on the left of a multiple assignment) breaks; use a temporary	differs	
+codegen_begin_end	BEGIN {} / END {}, flip-flops and alias of globals do not compile	ng	

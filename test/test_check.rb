@@ -204,13 +204,16 @@ class TestCheck < Minitest::Test
           p defined?(x)
           r = (1..)
           v = [3, 1].sort_by { _1 }
+          w = [3, 1].each_with_index.map { |x, i| x + i }
+          1.step(10, 2) { |k| p k }
         end
       end
     RB
     ids = C.pico(src, bundle_checks).map { _1["id"] }.uniq.sort
-    %w[regexp_literal struct array_sum skill_multi_index skill_defined range_endless array_sort_by].each do |id|
+    %w[regexp_literal struct array_sum skill_multi_index skill_defined range_endless array_sort_by enumerator_next].each do |id|
       assert_includes ids, id
     end
+    refute_includes ids, "range_step" # step with a block is fine
   end
 
   def test_pico_skips_own_methods_and_plain_code
