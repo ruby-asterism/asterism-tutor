@@ -205,6 +205,98 @@ class TestContainer < Minitest::Test
     assert_equal [long, queued].sort, recs.map { _1["ticket"] }.sort
   end
 
+  # --- what a stop does to the day's count and cost ---
+
+  def wait_for(max = 10)
+    t = Time.now
+    sleep 0.05 until yield || Time.now - t > max
+  end
+
+  def test_a_request_cut_by_the_stop_is_not_counted_but_its_cost_is
+    c = cfg({ "limits" => { "per_device_per_day" => 1 } })
+    srv = server(c)
+    id = srv.helper.ask({ "mode" => "make", "text" => "[[regexp_always]] [[slow]] つくって", "fw" => "3.1.0" },
+                        from: "d1")["ticket"]
+    assert_equal 1, srv.limits.used("d1")
+    wait_for { srv.log.records.any? { _1["ev"] == "llm" && _1["ticket"] == id } } # the first answer came
+    cost = srv.limits.cost_today
+    assert_operator cost, :>, 0
+    assert_equal [id], srv.jobs.shutdown(0)
+    assert_equal 0, srv.limits.used("d1")                      # given back
+    assert_operator srv.limits.cost_today, :>=, cost            # the LLM call is paid for
+    srv.jobs.stop
+    # The next start reads the same from the records.
+    again = nil
+    capture_io { again = server(c) }
+    assert_equal 0, again.limits.used("d1")
+    assert_operator again.limits.cost_today, :>=, cost
+    assert_nil again.limits.refuse("d1")                        # the one request a day is still there
+    again.jobs.stop
+  end
+
+  def test_a_request_left_by_a_killed_gem_is_not_counted
+    c = cfg({ "limits" => { "per_device_per_day" => 1 } })
+    log = Tutor::Log.new(c.log_dir)
+    s = Tutor::Store.new(c)
+    id = s.new_ticket("d1", "req" => { "mode" => "ask" })
+    s.update(id, "state" => "thinking")
+    log.write(:ask, device: "d1", ticket: id)
+    srv = nil
+    capture_io { srv = server(c) }
+    assert_equal 0, srv.limits.used("d1")
+    assert_nil srv.limits.refuse("d1")
+    srv.jobs.stop
+  end
+
+  def test_only_today_s_requests_are_given_back
+    now = Time.new(2026, 11, 19, 0, 10, 0)
+    c = cfg
+    log = Tutor::Log.new(c.log_dir, clock: -> { now })
+    l = Tutor::Limits.new(c, log, clock: -> { now })
+    l.count("d1")
+    l.uncount("d1", now - 3600)                                 # asked yesterday
+    assert_equal 1, l.used("d1")
+    l.uncount("d1", now)
+    assert_equal 0, l.used("d1")
+    l.uncount("d1", now)
+    assert_equal 0, l.used("d1")                                # never below 0
+  end
+
+  # --- the day follows TZ ---
+
+  def with_tz(tz)
+    old = ENV["TZ"]
+    ENV["TZ"] = tz
+    yield
+  ensure
+    ENV["TZ"] = old
+  end
+
+  # 14:50 and 15:10 UTC are 23:50 and 00:10 of the next day in Japan.
+  def test_the_day_of_the_limits_and_the_records_follows_tz
+    before = Time.utc(2026, 11, 18, 14, 50).to_i
+    after = Time.utc(2026, 11, 18, 15, 10).to_i
+    { "Asia/Tokyo" => [%w[tutor-2026-11-18.jsonl tutor-2026-11-19.jsonl], 1],
+      "UTC" => [%w[tutor-2026-11-18.jsonl], 2] }.each do |tz, (files, used)|
+      with_tz(tz) do
+        c = cfg({ "limits" => { "per_device_per_day" => 2 } })
+        at = before
+        clock = -> { Time.at(at) }
+        log = Tutor::Log.new(c.log_dir, clock: clock)
+        l = Tutor::Limits.new(c, log, clock: clock)
+        l.count("d1")
+        log.write(:ask, device: "d1", ticket: "t1")
+        at = after
+        l.count("d1")
+        log.write(:ask, device: "d1", ticket: "t2")
+        assert_equal files, Dir.children(c.log_dir).sort, tz
+        assert_equal used, l.used("d1"), tz
+        assert_equal used, Tutor::Limits.new(c, log, clock: clock).used("d1"), "#{tz} read back"
+        assert_includes File.read(log.path(Time.at(after))), tz == "UTC" ? "T15:10:00.000+00:00" : "T00:10:00.000+09:00"
+      end
+    end
+  end
+
   # --- the status file ---
 
   def status(over = {})

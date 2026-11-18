@@ -2,7 +2,9 @@ module Tutor
   # The daily limits: requests per device and the estimated cost of all
   # devices. A day is the local date of the process (TZ). After a restart
   # (a container made again on the same volume too) the counts of the day
-  # are read back from the log.
+  # are read back from the log. A request that failed only because the gem
+  # stopped (error "stopped", Jobs#stopped) is not counted; what the LLM
+  # cost for it is.
   class Limits
     def initialize(cfg, log, clock: -> { Time.now })
       @cfg = cfg
@@ -12,8 +14,10 @@ module Tutor
       @count = Hash.new(0)
       @cost = 0.0
       roll
-      log.records.each do |r|
-        @count[r["device"]] += 1 if r["ev"] == "ask"
+      recs = log.records
+      stopped = recs.select { _1["ev"] == "failed" && _1["error"] == "stopped" }.map { _1["ticket"] }
+      recs.each do |r|
+        @count[r["device"]] += 1 if r["ev"] == "ask" && !stopped.include?(r["ticket"])
         @cost += r["cost_usd"].to_f if r["ev"] == "llm"
       end
     end
@@ -49,6 +53,16 @@ module Tutor
     end
 
     def count(device) = @lock.synchronize { roll; @count[device] += 1 }
+
+    # A request asked at `asked` (a Time) given back: it failed because the
+    # gem stopped. Only a request of today is in today's count.
+    def uncount(device, asked)
+      @lock.synchronize do
+        roll
+        next unless asked.respond_to?(:strftime) && asked.strftime("%Y-%m-%d") == @day
+        @count[device] -= 1 if @count[device].positive?
+      end
+    end
     def add_cost(usd) = @lock.synchronize { roll; @cost += usd }
   end
 end

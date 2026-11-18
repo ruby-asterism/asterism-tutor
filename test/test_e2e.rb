@@ -443,6 +443,7 @@ class TestE2E < Minitest::Test
       r = b.result(long)                                     # the one cut by the stop
       assert_equal "stopped", r["error"]
       assert_equal Tutor::Jobs::STOPPED, r["message"]
+      assert_equal 0, b.hello["used"]                       # the one cut by the stop is not counted
       after = Tutor::Status.read(File.join(WORK, "state_rs", "status.json"))
       assert_operator cost, :>, 0
       assert_in_delta cost, after["cost_today"], 1e-6        # the day's cost came back

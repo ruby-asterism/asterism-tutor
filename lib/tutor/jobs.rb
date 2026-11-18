@@ -75,6 +75,8 @@ module Tutor
       return unless t
       @store.update(id, "state" => "failed", "message" => STATE_TEXT["failed"], "error" => "stopped", "fail_message" => STOPPED)
       @log.write(:failed, device: t["device"], ticket: id, error: "stopped", message: STOPPED, detail: when_)
+      # Not the device's fault: the request is not counted (its LLM cost is).
+      @limits.uncount(t["device"], t["created"])
     end
 
     # After shutdown gave up on them, a worker that is still running writes
