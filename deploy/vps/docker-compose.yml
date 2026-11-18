@@ -45,6 +45,9 @@ services:
       ASTERISM_TUTOR_LOG_DIR: /state/log
       ASTERISM_TUTOR_STATE_DIR: /state/store
       ASTERISM_TUTOR_ROUTER: ${TUTOR_ROUTER:-tls/zenohd:7448}
+      # The day of the daily limits and of the records' files is this time
+      # zone's date (TUTOR_TZ in .env; a TZ line there is not used).
+      TZ: ${TUTOR_TZ:-Asia/Tokyo}
       MALLOC_ARENA_MAX: "2"
     volumes:
       - state:/state

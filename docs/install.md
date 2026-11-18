@@ -125,7 +125,12 @@ the copy in your downloads). `credentials/` is never committed (its
 - The model and the limits: `ASTERISM_TUTOR_MODEL` (default
   `claude-haiku-5-5`), `ASTERISM_TUTOR_PER_DAY` (50 requests a device a
   day), `ASTERISM_TUTOR_COST_PER_DAY` (1.0 USD a day in all).
-- `TZ`: the day of the limits is this time zone's date (default UTC).
+- `TUTOR_TZ` (default `Asia/Tokyo`): the day of the limits and of the
+  records' files is this time zone's date, so a new day starts at 00:00 in
+  Japan. It becomes the container's `TZ` (a `TZ` line in `.env` is not used).
+- A request that fails only because the tutor stopped (an update, a
+  restart; the device reads "stopped") is not counted in the device's
+  requests of the day; what the LLM already cost for it is counted.
 - `ASTERISM_TUTOR_MAKE=false` / `ASTERISM_TUTOR_FIX=false` turn "make" and
   "fix it for me" off.
 
@@ -190,8 +195,9 @@ not lose the records, the results the devices have not fetched yet or the
 day's counts and cost (the volume). A request being worked on at the
 moment gets 8 seconds (`ASTERISM_TUTOR_STOP_GRACE`) to end; after that it
 fails as "stopped" and the device shows "AI の係が止まったので、答えを作れません
-でした。もう一度送ってください。" when it asks again. A new request during the
-stop is told the helper is stopping. The conversation so far (the last few
+でした。もう一度送ってください。" when it asks again; it is not counted in
+the device's requests of the day. A new request during the stop is told the
+helper is stopping. The conversation so far (the last few
 exchanges, forgotten after 30 minutes anyway) is not kept.
 
 A new certificate for the row `tutor`: put the new `.tar` in place and
@@ -204,7 +210,7 @@ volume's `log/`:
 
 ```
 docker compose exec tutor ls /state/log
-docker compose exec tutor cat /state/log/tutor-2026-11-19.jsonl | tail -n 20
+docker compose exec tutor cat /state/log/tutor-2026-11-19.jsonl | tail -n 20    # the date is TUTOR_TZ's
 docker compose exec tutor sh -c 'grep "\"ev\":\"llm\"" /state/log/*.jsonl' | wc -l    # the LLM calls
 ```
 

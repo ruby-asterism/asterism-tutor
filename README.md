@@ -128,7 +128,9 @@ The environment (a container's `.env`; an empty value is the same as none):
 | `ASTERISM_TUTOR_STOP_GRACE` | `jobs.stop_grace_s` |
 | `ANTHROPIC_API_KEY` | the LLM key (only here, never in a file of settings) |
 
-A day of the limits is the local date of the process (`TZ`).
+A day of the limits (and of the log's files) is the local date of the process (`TZ`; the
+container's default is `Asia/Tokyo`, `TUTOR_TZ` in `deploy/vps/.env`). A request that failed
+only because the gem stopped (`stopped`) is not counted in the day's requests; its LLM cost is.
 
 ## What a device calls (`<node>/tutor/helper`)
 

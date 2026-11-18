@@ -13,7 +13,10 @@ Runs as a container next to an Asterism console (docs/install.md).
   exposed (for a healthcheck; it reads `status.json`, no port).
 - SIGTERM: no new requests, the ones being worked on get `jobs.stop_grace_s` (8 s), the rest
   are failed as `stopped` (also at the next start, for a gem that was killed). A request
-  during the stop gets the error `stopping`.
+  during the stop gets the error `stopping`. A request failed as `stopped` is not counted in
+  the device's requests of the day (the LLM cost it already made is).
+- The container's day (the limits and the records' files) is Japan's by default
+  (`TUTOR_TZ=Asia/Tokyo`).
 - `deploy/vps/`: the Dockerfile, the compose files, `env.example`, `update.sh`; the image
   `ghcr.io/ruby-asterism/asterism-tutor` built for each tag `v<version>` (amd64).
 - `test/sender.rb --credentials` calls through an mTLS router with a console's certificate;
