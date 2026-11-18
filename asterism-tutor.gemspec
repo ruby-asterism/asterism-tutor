@@ -13,7 +13,7 @@ Gem::Specification.new do |s|
   s.license = "MIT"
   s.required_ruby_version = ">= 3.4"
   s.files = Dir["lib/**/*.rb", "exe/*", "bundles/**/*", "data/*", "config/*.example",
-                "tools/make_bundle.rb", "README.md"]
+                "tools/make_bundle.rb", "README.md", "README.ja.md", "LICENSE", "CHANGELOG.md"]
   s.require_paths = ["lib"]
   s.bindir = "exe"
   s.executables = ["asterism-tutor"]
