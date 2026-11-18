@@ -1,0 +1,9 @@
+# The image's build context is the repository (deploy/vps/Dockerfile).
+.git
+.github
+.bundle
+tmp
+test
+*.gem
+deploy/vps/.env
+deploy/vps/credentials

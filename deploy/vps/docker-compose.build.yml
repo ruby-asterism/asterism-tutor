@@ -1,0 +1,17 @@
+# Build the tutor's image here instead of pulling the published one
+# (docs/install.md, "Building the image yourself"):
+#
+#   docker compose -f docker-compose.yml -f docker-compose.build.yml build
+#   docker compose up -d
+#
+# The image gets the name of docker-compose.yml (TUTOR_IMAGE and
+# TUTOR_VERSION from .env); set TUTOR_IMAGE to a name of your own (e.g.
+# asterism-tutor-local) so a later pull does not replace it. update.sh
+# --build builds this way from the version's tag.
+services:
+  tutor:
+    build:
+      context: ../..
+      dockerfile: deploy/vps/Dockerfile
+      args:
+        TUTOR_VERSION: ${TUTOR_VERSION:-0.2.0}

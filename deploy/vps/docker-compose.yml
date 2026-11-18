@@ -1,0 +1,80 @@
+# The AI helper (asterism-tutor) on a server, next to an Asterism console
+# (its deploy/vps, compose project "asterism"): docs/install.md. Its own
+# compose project ("asterism-tutor"), so the console's update.sh and the
+# game host's never touch it, and this one's never touches them.
+#
+#   tutor    no port: joins zenohd tls/7448 on the console's "router" network
+#            with its own certificate (tutor.tar, a registry row "tutor" with the
+#            role tutor-host) and exposes <node>/tutor/helper; the devices with
+#            the role tutor call it there. It calls the LLM's API over https.
+#
+# From the console's project it takes, by name (ASTERISM_PROJECT, "asterism"):
+#   <project>_router   the network zenohd and the console are on
+# and it keeps its own:
+#   state              log/    the records (JSONL, one file a day, never deleted
+#                              by the gem; not in the console's daily backup)
+#                      store/  the results a device has not fetched yet (one file
+#                              per request) and status.json (the healthcheck's)
+#                      The day's requests and cost are read back from log/ at start.
+# and reads, from this directory:
+#   credentials/       read-only: the tutor's .tar from the console, named in .env
+#                      (ASTERISM_TUTOR_CREDENTIALS=/credentials/tutor.tar).
+#                      Readable by uid 1000 (chown 1000:1000, chmod 600).
+#
+# The image: ghcr.io/ruby-asterism/asterism-tutor:<TUTOR_VERSION>, published
+# for each version (TUTOR_IMAGE and TUTOR_VERSION in .env). To build it here
+# instead: docker-compose.build.yml.
+#
+# Settings: .env next to this file (env.example); the LLM key is
+# ANTHROPIC_API_KEY there and nowhere else. Updating: ./update.sh.
+name: asterism-tutor
+
+services:
+  tutor:
+    image: ${TUTOR_IMAGE:-ghcr.io/ruby-asterism/asterism-tutor}:${TUTOR_VERSION:-0.2.0}
+    init: true
+    restart: unless-stopped
+    # SIGTERM: no new requests, the ones being worked on get
+    # ASTERISM_TUTOR_STOP_GRACE (jobs.stop_grace_s, 8 s) to end, the rest
+    # are failed as "stopped" (a device reads that when it asks again).
+    stop_grace_period: 15s
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      ASTERISM_TUTOR_LOG_DIR: /state/log
+      ASTERISM_TUTOR_STATE_DIR: /state/store
+      ASTERISM_TUTOR_ROUTER: ${TUTOR_ROUTER:-tls/zenohd:7448}
+      MALLOC_ARENA_MAX: "2"
+    volumes:
+      - state:/state
+      - ./credentials:/credentials:ro
+    networks:
+      router: {}
+    # Measured (docs/install.md, "Memory"): 55 MB RSS idle, 63 MB after
+    # requests with a 45 KB document (the fake LLM); the Anthropic SDK adds
+    # about 48 MB once loaded; the healthcheck's command about 33 MB while
+    # it runs. Over the limit, the kernel stops the process and docker
+    # starts it again (the requests being worked on fail as "stopped").
+    mem_limit: ${TUTOR_MEM_LIMIT:-256m}
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "5"
+    # Healthy: joined to the router with the helper exposed (the gem writes
+    # /state/store/status.json every 2 s; the command reads it).
+    healthcheck:
+      test: ["CMD", "bundle", "exec", "exe/asterism-tutor", "status"]
+      interval: 30s
+      timeout: 10s
+      start_period: 20s
+      retries: 3
+
+volumes:
+  state: {}
+
+networks:
+  router:
+    external: true
+    name: ${ASTERISM_PROJECT:-asterism}_router
