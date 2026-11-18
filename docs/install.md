@@ -85,11 +85,13 @@ In the console (Admin > Relay):
      asterism/*/tutor/helper/call/${node}
      ```
    - Watch: `asterism/**`
-   - For browsers: see section 9 before ticking it.
+   - "Browsers have this role": off (the users' browsers get it one by one,
+     section 9).
    A `**` does not match a chunk that starts with `@`, so each `@` line is
    needed as it is.
 3. **The devices' rows** (e.g. `fmruby-aaaaaa`): Edit, tick `tutor` next to
-   the roles they have. Only those devices reach the helper.
+   the roles they have. Only those devices reach the helper. For a user's
+   browser (console 0.4.2 or later): section 9.
 4. **Register**: kind `client`, name `tutor`, role `tutor-host`. Open it,
    "Issue a certificate", "Save all (.tar)": `tutor.tar`.
 5. Apply (the banner "Review and apply").
@@ -223,14 +225,33 @@ them; the console's backup does not take them. To keep a copy elsewhere:
 
 ## 9. Browsers
 
-A role marked "for browsers" goes to every browser page the router lets in:
-the pages with a certificate of their user's (`wasm-<handle>`) and the pages
-with a pass on the shared `ws/` subject alike. The console has no way yet
-to give the role `tutor` to some users' browsers only, and on the shared
-`ws/` subject a page can call under another browser's name. So ticking "for
-browsers" on `tutor` lets every member's browser reach the helper, and
-`ASTERISM_TUTOR_DEVICES` with `wasm-<handle>` names only guards against
-mix-ups there, not against a member who wants to get past it.
+The browser build (Family mruby in a web page, opened from the console)
+can use the helper too, for the users you name. It needs **console 0.4.2
+or later**: the role is given per user there, and the router gives it only
+to the page the console's door connects with that user's certificate
+(`wasm-<handle>`).
+
+1. **In the console** (Admin > Members > Browsers): the user has a handle
+   and a certificate ("in the ACL"; "Make the missing certificates" and
+   Apply otherwise). Edit the user, tick `tutor` under "Roles of this
+   browser", Save, Apply.
+2. **In `.env`**: add the user's browser node to the devices,
+   `ASTERISM_TUTOR_DEVICES=fmruby-aaaaaa,wasm-<handle>`, then
+   `docker compose up -d`.
+3. The user opens the browser build from the console ("Launch Web
+   Studio" or a pass's link) and starts AI Helper.
+
+Leave "Browsers have this role" off on the role `tutor`: with it, every
+browser page would get the role, the pages that come through the shared
+connection too, and those can call under any browser's name. Only the
+user's own page reaches the helper: a second page of the same user opened
+later takes the name over, and the earlier one goes on through the shared
+connection without the role (the console's docs/g1_5.md, "Browsers the
+router tells apart"). Another user's browser, and any page without the
+user's certificate, does not find the helper.
+
+With a console before 0.4.2 the role can only be given to every browser
+at once; do not use it for the helper there.
 
 ## 10. Memory
 

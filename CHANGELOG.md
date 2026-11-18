@@ -17,6 +17,8 @@ Runs as a container next to an Asterism console (docs/install.md).
   the device's requests of the day (the LLM cost it already made is).
 - The container's day (the limits and the records' files) is Japan's by default
   (`TUTOR_TZ=Asia/Tokyo`).
+- docs/install.md: the browser build's users, with the role `tutor` given per user (Asterism
+  console 0.4.2 or later).
 - `deploy/vps/`: the Dockerfile, the compose files, `env.example`, `update.sh`; the image
   `ghcr.io/ruby-asterism/asterism-tutor` built for each tag `v<version>` (amd64).
 - `test/sender.rb --credentials` calls through an mTLS router with a console's certificate;
