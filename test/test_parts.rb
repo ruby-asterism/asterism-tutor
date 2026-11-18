@@ -53,7 +53,8 @@ class TestParts < Minitest::Test
   Minitest.after_run { FileUtils.rm_rf(TMP) }
 
   def cfg(over = {})
-    Tutor::Config.load(nil, Tutor::Config.deep_merge({ "store" => { "log_dir" => Dir.mktmpdir(nil, TMP) } }, over))
+    dirs = { "store" => { "log_dir" => Dir.mktmpdir(nil, TMP), "state_dir" => Dir.mktmpdir(nil, TMP) } }
+    Tutor::Config.load(nil, Tutor::Config.deep_merge(dirs, over), env: {})
   end
 
   def test_talk_keeps_turns_and_forgets

@@ -48,7 +48,7 @@ class TestE2E < Minitest::Test
     _in, out, wait = Open3.popen2e("bundle", "exec", "ruby", EXE, "--config", cfg)
     line = nil
     t = Time.now
-    until (line = out.gets).nil? || line.include?("asterism-tutor: ")
+    until (line = out.gets).nil? || line.include?("asterism-tutor: model ")
       raise "#{name} did not start" if Time.now - t > 20
     end
     raise "#{name} ended: #{out.read}" if line.nil?
@@ -77,6 +77,7 @@ class TestE2E < Minitest::Test
       provider = "fake"
       [store]
       log_dir = "#{WORK}/log_main"
+      state_dir = "#{WORK}/state_main"
     TOML
     @servers << start("off", <<~TOML)
       [network]
@@ -92,6 +93,7 @@ class TestE2E < Minitest::Test
       fix = false
       [store]
       log_dir = "#{WORK}/log_off"
+      state_dir = "#{WORK}/state_off"
     TOML
     Minitest.after_run do
       @nets.each_value { _1.close rescue nil }
@@ -377,6 +379,77 @@ class TestE2E < Minitest::Test
     assert_equal 3, s.hello["used"]
     other = sender("fmruby-lim002", OFF)                     # another device still may
     assert_equal "answer", other.run(req("ask", "q"))["kind"]
+  end
+
+  # --- a restart on the same volume (the container made again) ---
+
+  RS = "tutor-rs/tutor/helper".freeze
+  RS_TOML = <<~TOML.freeze
+    [network]
+    router = "#{ROUTER}"
+    node = "tutor-rs"
+    devices = ["fmruby-rst001", "fmruby-rst002"]
+    [llm]
+    provider = "fake"
+    [jobs]
+    stop_grace_s = 1
+    [store]
+    log_dir = "#{WORK}/log_rs"
+    state_dir = "#{WORK}/state_rs"
+  TOML
+
+  # The status command; want: retried for a few seconds until it says so
+  # (the gem writes its status every 2 s).
+  def status_cmd(cfg, want: nil)
+    t = Time.now
+    loop do
+      out, code = Open3.capture2e("bundle", "exec", "ruby", EXE, "status", "--config", cfg)
+      return [code.exitstatus, out] if want.nil? || code.exitstatus == want || Time.now - t > 6
+      sleep 0.5
+    end
+  end
+
+  def test_sigterm_and_restart_keep_results_counts_and_cost
+    gem = self.class.start("rs", RS_TOML)
+    cfg = File.join(WORK, "rs.toml")
+    code, out = status_cmd(cfg, want: 0)
+    assert_equal 0, code, out
+    assert_includes out, "up, joined"
+    a = sender("fmruby-rst001", RS)
+    done = a.run(req("ask", "取りに来ない答え"), ack: false)
+    assert_equal "answer", done["kind"]
+    b = sender("fmruby-rst002", RS)
+    long = b.ask(req("ask", "[[wait 20]] 長い頼み"))["ticket"]
+    sleep 0.5
+    used = a.hello["used"]
+    cost = log_records("rs").select { _1["ev"] == "llm" }.sum { _1["cost_usd"].to_f }
+    t0 = Time.now
+    Process.kill("TERM", gem.pid)
+    assert gem.join(15), "the gem ends after SIGTERM"
+    assert_operator Time.now - t0, :<, 10
+    assert_equal 0, gem.value.exitstatus
+    code, out = status_cmd(cfg)
+    assert_equal 1, code, out                                # stopped: not healthy
+
+    gem = self.class.start("rs", RS_TOML)
+    begin
+      code, out = status_cmd(cfg, want: 0)
+      assert_equal 0, code, out
+      a = sender("fmruby-rst001", RS)
+      assert_equal used, a.hello["used"]                     # the day's count came back
+      assert_includes a.pending, [done["ticket"], "done"]    # the result not fetched
+      assert_equal done["explain"], a.result(done["ticket"])["explain"]
+      b = sender("fmruby-rst002", RS)
+      r = b.result(long)                                     # the one cut by the stop
+      assert_equal "stopped", r["error"]
+      assert_equal Tutor::Jobs::STOPPED, r["message"]
+      after = Tutor::Status.read(File.join(WORK, "state_rs", "status.json"))
+      assert_operator cost, :>, 0
+      assert_in_delta cost, after["cost_today"], 1e-6        # the day's cost came back
+    ensure
+      Process.kill("TERM", gem.pid) rescue nil
+      gem.join(15)
+    end
   end
 
   # --- the record ---

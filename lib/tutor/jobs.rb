@@ -11,6 +11,9 @@ module Tutor
       "cancelled" => "やめました"
     }.freeze
     EXPLAIN_MAX = 4096
+    # What a device reads for a request the gem could not finish because it
+    # stopped (SIGTERM after jobs.stop_grace_s, or a crash found at start).
+    STOPPED = "AI の係が止まったので、答えを作れませんでした。もう一度送ってください。".freeze
 
     def initialize(cfg, store:, log:, limits:, bundles:, llm:)
       @cfg = cfg
@@ -31,12 +34,53 @@ module Tutor
 
     def push(id) = @queue << id
 
+    # After shutdown a worker may still be inside a call to the LLM; its
+    # ticket is already failed, so it is not waited for long.
     def stop
       @threads.size.times { @queue << nil }
-      @threads.each { _1.join(5) }
+      @threads.each { _1.join(@halted ? 0.2 : 5) }
     end
 
+    # True from shutdown on: the helper takes no new request.
+    def closing? = @closing ? true : false
+
+    # On SIGTERM (Server#run): no new request is taken (Helper#ask), the
+    # requests being worked on (and those queued behind them) get up to
+    # grace seconds to end, and what is left is failed with STOPPED, so a
+    # device reads that from status / result / pending once the gem is back.
+    # Returns the ids failed.
+    def shutdown(grace = @cfg.dig("jobs", "stop_grace_s").to_f, every: 0.1)
+      @closing = true
+      t0 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      while !@store.active_ids.empty? && Process.clock_gettime(Process::CLOCK_MONOTONIC) - t0 < grace
+        sleep every
+      end
+      @halted = true
+      left = @store.active_ids
+      left.each { stopped(_1, "shutdown") }
+      @threads.size.times { @queue << nil }
+      left
+    end
+
+    # The tickets a gem that stopped without its shutdown (killed, out of
+    # memory) left being worked on: failed with STOPPED at start.
+    def fail_interrupted
+      ids = @store.interrupted
+      ids.each { stopped(_1, "restart") }
+      ids
+    end
+
+    def stopped(id, when_)
+      t = @store.ticket(id)
+      return unless t
+      @store.update(id, "state" => "failed", "message" => STATE_TEXT["failed"], "error" => "stopped", "fail_message" => STOPPED)
+      @log.write(:failed, device: t["device"], ticket: id, error: "stopped", message: STOPPED, detail: when_)
+    end
+
+    # After shutdown gave up on them, a worker that is still running writes
+    # nothing more (the ticket says STOPPED).
     def set(id, state, extra = {})
+      return if @halted
       @store.update(id, { "state" => state, "message" => STATE_TEXT[state] }.merge(extra))
     end
 
@@ -63,12 +107,14 @@ module Tutor
     end
 
     def finish_cancel(t)
+      return if @halted
       set(t["id"], "cancelled")
       @log.write(:cancelled, device: t["device"], ticket: t["id"])
     end
 
     def fail_ticket(t, error, message, detail = nil, problems: nil)
       return unless t
+      return if @halted
       set(t["id"], "failed", "error" => error, "fail_message" => message, "problems" => problems)
       @log.write(:failed, device: t["device"], ticket: t["id"], error: error, message: message, detail: detail, problems: problems)
     end
@@ -211,6 +257,7 @@ module Tutor
         finish_cancel(t)
         return
       end
+      return if @halted
       set(id, "done", "result" => result, "doc_pieces" => ps, "full_hints" => full_hints, "done_at" => Time.now)
       @store.add_turn(t["device"], Prompt.talk_user(t["req"], t["doc"]), Prompt.talk_assistant(parsed, result["kind"]))
       @log.write(:result, device: t["device"], ticket: id, result: result, doc: text)

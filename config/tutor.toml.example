@@ -1,6 +1,8 @@
 # asterism-tutor settings. Every key is optional (the defaults are shown).
 # The LLM key is NOT written here: give it as the environment variable
 # ANTHROPIC_API_KEY of the process that runs asterism-tutor.
+# The environment (ASTERISM_TUTOR_*, README "Settings") goes over this file,
+# and the command's options over both.
 
 [network]
 router = "tcp/127.0.0.1:7447"     # the Asterism router (the sim's zenohd is tcp/127.0.0.1:7447)
@@ -39,6 +41,7 @@ forget_min = 30                    # forgotten after this many minutes unused
 [store]
 result_hours = 24                  # results kept for a device that went away
 log_dir = "~/.local/share/asterism-tutor/log"
+state_dir = "~/.local/share/asterism-tutor/state"   # results not fetched yet, status.json
 doc_max = 65536
 piece = 8192
 
@@ -47,3 +50,4 @@ dir = ""                           # "" = the bundles in the gem
 
 [jobs]
 workers = 2
+stop_grace_s = 8                   # on SIGTERM, how long the requests being worked on are waited for

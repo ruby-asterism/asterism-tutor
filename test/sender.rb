@@ -8,6 +8,9 @@
 # As a command (a manual run against a gem, e.g. with the real LLM):
 #   ruby test/sender.rb --router tcp/127.0.0.1:17520 --node fmruby-test01 \
 #     [--doc app.rb] [--error "..."] [--cy 3] [--out new.rb] MODE TEXT
+# With a console's certificate (an mTLS router; the node is the
+# certificate's name, the router its asterism.json's unless given):
+#   ruby test/sender.rb --credentials fmruby-aaaaaa.tar [--router tls/localhost:17448] ask "..."
 require "asterism"
 require "json"
 
@@ -104,10 +107,12 @@ end
 
 if $PROGRAM_NAME == __FILE__
   require "optparse"
-  o = { router: "tcp/127.0.0.1:17520", node: "fmruby-test01" }
+  o = { router: nil, node: nil, app: "ai_helper" }
   OptionParser.new do |p|
     p.on("--router L") { o[:router] = _1 }
     p.on("--node ID") { o[:node] = _1 }
+    p.on("--credentials TAR", "a console's .tar (mTLS)") { o[:credentials] = _1 }
+    p.on("--app NAME", "this application's name (default ai_helper, the device's)") { o[:app] = _1 }
     p.on("--path P", "the helper's path (default: found)") { o[:path] = _1 }
     p.on("--doc FILE") { o[:doc] = File.read(_1) }
     p.on("--error TEXT") { o[:error] = _1 }
@@ -116,7 +121,15 @@ if $PROGRAM_NAME == __FILE__
   end.parse!
   mode, text = ARGV
   abort("usage: sender.rb [options] MODE TEXT") unless mode
-  Asterism.connect(o[:router], node: o[:node], app: "aihelp") do |net|
+  args = { app: o[:app] }
+  if o[:credentials]
+    args[:credentials] = o[:credentials]
+    args[:node] = o[:node] if o[:node]
+  else
+    o[:router] ||= "tcp/127.0.0.1:17520"
+    args[:node] = o[:node] || "fmruby-test01"
+  end
+  Asterism.connect(o[:router], **args) do |net|
     s = Sender.new(net, o[:path])
     p s.hello
     req = { "mode" => mode, "text" => text.to_s, "fw" => "3.1.0", "lang" => "ja", "ver" => 1 }

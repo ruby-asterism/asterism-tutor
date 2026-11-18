@@ -1,7 +1,8 @@
 module Tutor
   # The daily limits: requests per device and the estimated cost of all
-  # devices. A day is the PC's local date. After a restart the counts of the
-  # day are read back from the log.
+  # devices. A day is the local date of the process (TZ). After a restart
+  # (a container made again on the same volume too) the counts of the day
+  # are read back from the log.
   class Limits
     def initialize(cfg, log, clock: -> { Time.now })
       @cfg = cfg
@@ -29,6 +30,8 @@ module Tutor
     end
 
     def used(device) = @lock.synchronize { roll; @count[device] }
+    # All devices' requests of the day (for the status).
+    def requests_today = @lock.synchronize { roll; @count.values.sum }
     def cost_today = @lock.synchronize { roll; @cost }
 
     # nil when the device may ask now, else the reason (an error Hash).

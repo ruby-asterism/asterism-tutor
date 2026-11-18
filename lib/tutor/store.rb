@@ -1,13 +1,26 @@
 require "securerandom"
+require "json"
+require "fileutils"
+require "time"
 
 module Tutor
-  # What the gem keeps in memory: documents being sent in pieces, the tickets
+  # What the gem keeps: documents being sent in pieces, the tickets
   # (requests and their results), and each device's talk. One Mutex; every
   # method returns copies or plain values, so the helper (on Asterism's
   # receiving thread) and the workers never share a Hash being changed.
+  #
+  # The tickets are also files, one per ticket (<state_dir>/tickets/<id>.json,
+  # written again on every change), so that a result a device has not
+  # fetched survives a restart (a container made again on the same volume).
+  # The documents in pieces and the talk stay in memory only: a document
+  # is sent again, and the talk is forgotten after talk.forget_min anyway.
   class Store
     ACTIVE = %w[queued thinking checking].freeze
     DOC_HOURS = 1
+    TIME_KEYS = %w[created done_at].freeze
+    ID = /\At[0-9a-f]{8}\z/
+
+    attr_reader :dir
 
     def initialize(cfg, clock: -> { Time.now })
       @cfg = cfg
@@ -16,6 +29,22 @@ module Tutor
       @docs = {}
       @tickets = {}
       @talks = {}
+      @dir = File.join(cfg.state_dir, "tickets")
+      FileUtils.mkdir_p(@dir)
+      load_tickets
+    end
+
+    # The tickets that were being worked on when the gem stopped (their
+    # work is gone with the process): ids, oldest first.
+    def interrupted
+      @lock.synchronize do
+        @tickets.values.select { ACTIVE.include?(_1["state"]) }.sort_by { _1["created"] }.map { _1["id"] }
+      end
+    end
+
+    # The tickets being worked on now (queued or running), all devices.
+    def active_ids
+      @lock.synchronize { @tickets.values.select { ACTIVE.include?(_1["state"]) }.map { _1["id"] } }
     end
 
     def now = @clock.call
@@ -63,6 +92,7 @@ module Tutor
         id = "t#{SecureRandom.hex(4)}"
         @tickets[id] = fields.merge("id" => id, "device" => device, "state" => "queued", "message" => "順番を待っています",
                                     "created" => now, "acked" => false, "cancel" => false)
+        save(id)
         id
       end
     end
@@ -78,7 +108,11 @@ module Tutor
     end
 
     def update(id, fields)
-      @lock.synchronize { @tickets[id]&.merge!(fields) }
+      @lock.synchronize do
+        next nil unless @tickets[id]
+        @tickets[id].merge!(fields)
+        save(id)
+      end
     end
 
     def active?(device)
@@ -97,6 +131,7 @@ module Tutor
         t = @tickets[id]
         return false unless t && t["device"] == device
         t["acked"] = true
+        save(id)
         true
       end
     end
@@ -104,8 +139,41 @@ module Tutor
     # The result's documents are dropped after result_hours; the log keeps them.
     def purge
       limit = now - @cfg.dig("store", "result_hours").to_f * 3600
-      @tickets.delete_if { |_, t| t["created"] < limit && !ACTIVE.include?(t["state"]) }
+      @tickets.delete_if do |id, t|
+        old = t["created"] < limit && !ACTIVE.include?(t["state"])
+        File.delete(file(id)) if old && File.exist?(file(id))
+        old
+      end
       @docs.delete_if { |_, d| d["at"] < now - DOC_HOURS * 3600 }
+    end
+
+    # --- the files ---
+
+    def file(id) = File.join(@dir, "#{id}.json")
+
+    # Written whole, then renamed over the old one: a reader (or a restart)
+    # sees the old ticket or the new one, never half of one.
+    def save(id)
+      t = @tickets[id]
+      data = t.to_h { |k, v| [k, TIME_KEYS.include?(k) && v.respond_to?(:iso8601) ? v.iso8601(3) : v] }
+      tmp = "#{file(id)}.tmp"
+      File.write(tmp, JSON.generate(data))
+      File.rename(tmp, file(id))
+    end
+
+    def load_tickets
+      Dir[File.join(@dir, "t*.json")].each do |f|
+        id = File.basename(f, ".json")
+        next unless ID.match?(id)
+        t = JSON.parse(File.read(f))
+        TIME_KEYS.each { t[_1] = Time.iso8601(t[_1]) if t[_1].is_a?(String) }
+        next unless t["id"] == id && t["created"].is_a?(Time)
+        @tickets[id] = t
+      rescue JSON::ParserError, ArgumentError, SystemCallError => e
+        warn "asterism-tutor: skipped the ticket file #{File.basename(f)} (#{e.class})"
+      end
+      Dir[File.join(@dir, "*.tmp")].each { File.delete(_1) rescue nil }
+      @lock.synchronize { purge }
     end
 
     # --- the talk: the last turns of each device ---

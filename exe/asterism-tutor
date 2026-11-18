@@ -2,32 +2,52 @@
 # Starts the AI helper as an Asterism application.
 #
 #   asterism-tutor [--config tutor.toml] [--router tcp/127.0.0.1:7447] [--node tutor] [--llm fake|anthropic]
-#              [--model ID] [--per-day N] [--cost-per-day USD]
+#              [--model ID] [--per-day N] [--cost-per-day USD] [--log-dir DIR] [--state-dir DIR]
+#   asterism-tutor status [--config tutor.toml] [--state-dir DIR]
+#                                       # 0: joined with the helper exposed, 1: not, 2: no fresh status
 #
-# The LLM key is read from the environment (ANTHROPIC_API_KEY) only.
+# Settings: the options, then the environment (ASTERISM_TUTOR_*; the file is
+# ASTERISM_TUTOR_CONFIG when --config is not given), then the file, then the
+# defaults. The LLM key is read from the environment (ANTHROPIC_API_KEY) only.
+# SIGTERM (and Ctrl-C): no new requests, the ones being worked on get
+# jobs.stop_grace_s to end, the rest are failed as stopped; then it exits.
 require "optparse"
 require_relative "../lib/tutor"
 
+command = ARGV.first == "status" ? ARGV.shift : "run"
 path = nil
 over = {}
+set = ->(section, key, value) { (over[section] ||= {})[key] = value }
 OptionParser.new do |o|
-  o.banner = "usage: asterism-tutor [options]"
+  o.banner = "usage: asterism-tutor [status] [options]"
   o.on("--config FILE", "settings (TOML)") { path = _1 }
-  o.on("--router LOCATOR", "the Asterism router, e.g. tcp/127.0.0.1:7447") { (over["network"] ||= {})["router"] = _1 }
-  o.on("--node ID", "this node's ID (default tutor)") { (over["network"] ||= {})["node"] = _1 }
-  o.on("--llm PROVIDER", "fake or anthropic") { (over["llm"] ||= {})["provider"] = _1 }
-  o.on("--model ID", "the LLM model, e.g. claude-haiku-5-5 or claude-sonnet-5-5") { (over["llm"] ||= {})["model"] = _1 }
-  o.on("--per-day N", Integer, "requests one device may make a day") { (over["limits"] ||= {})["per_device_per_day"] = _1 }
-  o.on("--cost-per-day USD", Float, "estimated cost all devices may use a day") { (over["limits"] ||= {})["cost_per_day_usd"] = _1 }
-  o.on("--log-dir DIR", "where the JSONL records go") { (over["store"] ||= {})["log_dir"] = _1 }
+  o.on("--router LOCATOR", "the Asterism router, e.g. tcp/127.0.0.1:7447") { set.("network", "router", _1) }
+  o.on("--node ID", "this node's ID (default tutor)") { set.("network", "node", _1) }
+  o.on("--llm PROVIDER", "fake or anthropic") { set.("llm", "provider", _1) }
+  o.on("--model ID", "the LLM model, e.g. claude-haiku-5-5 or claude-sonnet-5-5") { set.("llm", "model", _1) }
+  o.on("--per-day N", Integer, "requests one device may make a day") { set.("limits", "per_device_per_day", _1) }
+  o.on("--cost-per-day USD", Float, "estimated cost all devices may use a day") { set.("limits", "cost_per_day_usd", _1) }
+  o.on("--log-dir DIR", "where the JSONL records go") { set.("store", "log_dir", _1) }
+  o.on("--state-dir DIR", "where the results not fetched yet and the status go") { set.("store", "state_dir", _1) }
 end.parse!
 
-cfg = Tutor::Config.load(path, over)
-trap("TERM") { Thread.main.raise(Interrupt) }
 begin
-  Tutor::Server.new(cfg).run
-rescue Interrupt
-  nil
-rescue Tutor::LLM::Error => e
+  cfg = Tutor::Config.load(path, over)
+rescue Tutor::Config::Error => e
+  abort("asterism-tutor: #{e.message}")
+end
+
+if command == "status"
+  code, text = Tutor::Status.check(Tutor::Status.read(Tutor::Status.path(cfg)))
+  (code.zero? ? $stdout : $stderr).puts(text)
+  exit code
+end
+
+require "asterism"
+begin
+  server = Tutor::Server.new(cfg)
+  %w[TERM INT].each { |sig| trap(sig) { server.request_stop("SIG#{sig}") } }
+  exit server.run
+rescue Tutor::LLM::Error, Asterism::Error => e
   abort("asterism-tutor: #{e.message}")
 end
