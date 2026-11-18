@@ -4,7 +4,8 @@
 
 The parent's side of Family mruby's AI helper. A CRuby gem that takes requests from the
 AI Helper app on a Family mruby device (P4-Nano, Tab5) over Asterism, calls an LLM, checks
-the code that comes back and returns it.
+the code that comes back and returns it. It runs on a parent's PC, or as a container next to
+an Asterism console on a server ([docs/install.md](docs/install.md)).
 
 > Status: a prototype (fmruby-core, doc/ai_coding). Its behaviour and its settings will change.
 
@@ -26,7 +27,8 @@ device (AI Helper app) --Asterism router--> asterism-tutor (this gem) --> the LL
   Asterism node ID) and file locations are not sent, except the document's name.
 - **The log**: every request, the document sent, the instructions to the LLM, the answer,
   the usage with an estimated cost and the checks' results are kept as JSONL in
-  `~/.local/share/asterism-tutor/log/tutor-YYYY-MM-DD.jsonl`. The gem never deletes it.
+  `~/.local/share/asterism-tutor/log/tutor-YYYY-MM-DD.jsonl` (in the container, the volume's
+  `log/`). The gem never deletes it.
   A parent can read it (one JSON object per line; `ev` is `ask`, `llm`, `check`, `result`,
   `refused` and so on).
 - **The parent decides what is allowed**: the devices that may ask (`devices`), the daily
@@ -69,6 +71,19 @@ bundle exec exe/asterism-tutor --config tutor.toml --llm anthropic --model claud
   for `*/tutor/helper`.
 - To join a TLS router with an Asterism console's certificate (.tar), give the .tar's path
   as `network.credentials`.
+- `asterism-tutor status` says whether a running gem (the same settings) is joined to its
+  router with the helper exposed: exit 0 when it is, 1 when not (the router is away, it is
+  stopping), 2 when there is no fresh status (not running, hung). It reads
+  `<state_dir>/status.json`, which the gem writes every 2 s; no port is opened for it.
+- SIGTERM (and Ctrl-C): no new requests (a device is told the helper is stopping), the ones
+  being worked on get `jobs.stop_grace_s` (8 s) to end, and what is left is failed as
+  `stopped`; a device reads that from `status`, `result` and `pending` once the gem is back.
+  A request left being worked on by a gem that was killed is failed the same way at the next
+  start.
+- What survives a restart: the records (`log_dir`), the results a device has not fetched yet
+  (`<state_dir>/tickets/`, one file per request) and the day's counts and cost (read back from
+  the records). The documents being sent in pieces and the conversation so far (forgotten
+  after `talk.forget_min` anyway) do not.
 - Inside a program that already has an Asterism connection (a console, for example):
 
   ```ruby
@@ -79,7 +94,8 @@ bundle exec exe/asterism-tutor --config tutor.toml --llm anthropic --model claud
 
 ## Settings (`tutor.toml`)
 
-Every key and its default: `config/tutor.toml.example`. The main ones:
+Every key and its default: `config/tutor.toml.example`. The options of the command go over
+the environment, the environment over the file, the file over the defaults. The main ones:
 
 | Key | Default | Meaning |
 |---|---|---|
@@ -93,6 +109,26 @@ Every key and its default: `config/tutor.toml.example`. The main ones:
 | `talk.turns` / `talk.forget_min` | 4 / 30 | Exchanges kept as the conversation so far, and the minutes until they are forgotten |
 | `store.result_hours` | 24 | Hours a result is kept for a device that has not fetched it |
 | `store.log_dir` | `~/.local/share/asterism-tutor/log` | Where the log goes |
+| `store.state_dir` | `~/.local/share/asterism-tutor/state` | The results not fetched yet (`tickets/`) and `status.json` |
+| `jobs.stop_grace_s` | 8 | On SIGTERM, how long the requests being worked on are waited for |
+
+The environment (a container's `.env`; an empty value is the same as none):
+
+| Variable | Key |
+|---|---|
+| `ASTERISM_TUTOR_CONFIG` | the settings file (when `--config` is not given) |
+| `ASTERISM_TUTOR_ROUTER` | `network.router` (empty: the router the credentials name) |
+| `ASTERISM_TUTOR_CREDENTIALS` | `network.credentials` |
+| `ASTERISM_TUTOR_NODE` | `network.node` |
+| `ASTERISM_TUTOR_DEVICES` | `network.devices` (comma separated) |
+| `ASTERISM_TUTOR_LLM` / `ASTERISM_TUTOR_MODEL` | `llm.provider` / `llm.model` |
+| `ASTERISM_TUTOR_PER_DAY` / `ASTERISM_TUTOR_COST_PER_DAY` | `limits.per_device_per_day` / `limits.cost_per_day_usd` |
+| `ASTERISM_TUTOR_LOG_DIR` / `ASTERISM_TUTOR_STATE_DIR` | `store.log_dir` / `store.state_dir` |
+| `ASTERISM_TUTOR_MAKE` / `ASTERISM_TUTOR_FIX` | `modes.make` / `modes.fix` (true or false) |
+| `ASTERISM_TUTOR_STOP_GRACE` | `jobs.stop_grace_s` |
+| `ANTHROPIC_API_KEY` | the LLM key (only here, never in a file of settings) |
+
+A day of the limits is the local date of the process (`TZ`).
 
 ## What a device calls (`<node>/tutor/helper`)
 
@@ -121,6 +157,7 @@ A fix asked for as hints is `mode: "hint"` with `error`.
 bundle exec rake test      # unit tests + end-to-end tests with a router (docker, asterism_tutor_zenohd, 127.0.0.1:17520); every LLM is fake
 bundle exec rake unit      # only the ones without a router
 ruby test/sender.rb --router tcp/127.0.0.1:17520 --node fmruby-test01 ask "What is a variable?"   # one request by hand (in place of a device)
+ruby test/sender.rb --credentials fmruby-aaaaaa.tar ask "What is a variable?"   # the same through an mTLS router, with a console's certificate
 ```
 
 ## The knowledge bundle
@@ -139,6 +176,13 @@ the nearest older one is used and the log gets `bundle_fallback`.
 
 The rules and the bundle's documents are in Japanese (the AI Helper's users are children
 who read Japanese).
+
+## On a server
+
+`deploy/vps/` runs the gem as a container (image `ghcr.io/ruby-asterism/asterism-tutor`,
+built for each tag `v<version>` by `.github/workflows/image.yml`) next to an Asterism
+console, with a certificate of its own and the devices allowed by a role of the console's
+router. The steps: [docs/install.md](docs/install.md).
 
 ## Not checked yet
 

@@ -3,7 +3,8 @@
 [English](README.md)
 
 Family mruby の「AI に聞く」の、親の PC で動く側。端末 (P4-Nano・Tab5) の AI 連携アプリから
-Asterism で頼みを受け、LLM を呼び、コードを検査して返す CRuby の gem。
+Asterism で頼みを受け、LLM を呼び、コードを検査して返す CRuby の gem。親の PC でも、
+サーバの Asterism console の隣のコンテナとしても動く ([docs/install.md](docs/install.md)、英語)。
 
 > 状態: 試作 (fmruby-core の doc/ai_coding)。動きも設定の形も変わる。
 
@@ -21,7 +22,7 @@ Asterism で頼みを受け、LLM を呼び、コードを検査して返す CRu
   この gem の知識の束 (Family mruby のアプリの書き方・API の型・罠の表・見本。子どもの情報は入っていない)。
   端末の名前 (Asterism のノード ID) やファイルの置き場所は、文書の名前を除いて送らない。
 - **記録**: 頼み・送った文書・LLM への指示・答え・使った量 (usage) と見積もりの費用・検査の結果を、
-  全部 JSONL で `~/.local/share/asterism-tutor/log/tutor-YYYY-MM-DD.jsonl` に残す。gem は消さない。
+  全部 JSONL で `~/.local/share/asterism-tutor/log/tutor-YYYY-MM-DD.jsonl` (コンテナでは volume の `log/`) に残す。gem は消さない。
   親はこれを読める (1 行 1 件の JSON。`ev` が `ask`・`llm`・`check`・`result`・`refused` など)。
 - **できることを親が決める**: 受け付ける端末 (`devices`)、1 日の回数と費用の上限、「作成」「修正してもらう」を止める。
   AI の役目と決まり (子ども向けの言葉づかい、プログラムの話以外は断る、AI であると言う、分からないことは
@@ -57,6 +58,14 @@ bundle exec exe/asterism-tutor --config tutor.toml --llm anthropic --model claud
   (sim の中の端末からは `tcp/zenohd:7447` に見える同じルータ)。
 - 網の上では `<node>/tutor/helper` になる (既定のノード ID は `tutor`)。端末は `*/tutor/helper` で探す。
 - Asterism console の証明書 (.tar) で TLS のルータにつなぐなら `network.credentials` に .tar のパス。
+- `asterism-tutor status` は、動いている gem (同じ設定) がルータにつながり helper を公開できているかを返す。
+  できていれば 0、できていなければ 1 (ルータがいない、止まるところ)、新しい状態が無ければ 2 (動いていない、固まった)。
+  gem が 2 秒ごとに書く `<state_dir>/status.json` を読む (port は開かない)。
+- SIGTERM (と Ctrl-C): 新しい頼みは断り (端末には「止まるところ」と返す)、進行中の頼みは `jobs.stop_grace_s` (8 秒)
+  待ち、残ったものは `stopped` の失敗にする。端末は gem が戻ってから `status`・`result`・`pending` でそれを読む。
+  殺された gem が残した進行中の頼みも、次に起こしたときに同じ失敗にする。
+- 起こし直しても残るもの: 記録 (`log_dir`)、端末が取りに来ていない結果 (`<state_dir>/tickets/`、頼みごとに 1 ファイル)、
+  その日の回数と費用 (記録から読み戻す)。片で送られている途中の文書と会話の続き (どうせ `talk.forget_min` で忘れる) は残らない。
 - console など、すでに Asterism の接続を持つプログラムの中では:
 
   ```ruby
@@ -67,7 +76,7 @@ bundle exec exe/asterism-tutor --config tutor.toml --llm anthropic --model claud
 
 ## 設定 (`tutor.toml`)
 
-全部の項目と既定は `config/tutor.toml.example`。主なもの:
+全部の項目と既定は `config/tutor.toml.example`。オプションが環境変数より先、環境変数がファイルより先、ファイルが既定より先。主なもの:
 
 | 項目 | 既定 | 意味 |
 |---|---|---|
@@ -81,6 +90,13 @@ bundle exec exe/asterism-tutor --config tutor.toml --llm anthropic --model claud
 | `talk.turns` / `talk.forget_min` | 4 / 30 | 会話の続きに付ける往復の数と、忘れるまでの分 |
 | `store.result_hours` | 24 | 端末が取りに来ない結果を持つ時間 |
 | `store.log_dir` | `~/.local/share/asterism-tutor/log` | 記録の置き場 |
+| `store.state_dir` | `~/.local/share/asterism-tutor/state` | 取りに来ていない結果 (`tickets/`) と `status.json` |
+| `jobs.stop_grace_s` | 8 | SIGTERM のとき、進行中の頼みを待つ秒数 |
+
+環境変数 (コンテナの `.env`。空の値は無いのと同じ) の一覧は README.md の "Settings" の表。名前は `ASTERISM_TUTOR_*`
+(`ROUTER`・`CREDENTIALS`・`NODE`・`DEVICES`・`LLM`・`MODEL`・`PER_DAY`・`COST_PER_DAY`・`LOG_DIR`・`STATE_DIR`・`MAKE`・`FIX`・
+`STOP_GRACE`、設定のファイルは `ASTERISM_TUTOR_CONFIG`)。LLM の鍵は今のまま `ANTHROPIC_API_KEY` だけ。
+上限の「1 日」は、プロセスの地方時 (`TZ`) の日付。
 
 ## 端末から呼ぶ形 (`<node>/tutor/helper`)
 
@@ -108,6 +124,7 @@ bundle exec exe/asterism-tutor --config tutor.toml --llm anthropic --model claud
 bundle exec rake test      # 単体の試験 + ルータ (docker の asterism_tutor_zenohd、127.0.0.1:17520) を立てた通しの試験。LLM は全部偽物
 bundle exec rake unit      # ルータなしの分だけ
 ruby test/sender.rb --router tcp/127.0.0.1:17520 --node fmruby-test01 ask "変数って何?"   # 手で 1 回頼む (端末の代わり)
+ruby test/sender.rb --credentials fmruby-aaaaaa.tar ask "変数って何?"   # console の証明書で mTLS のルータ越しに
 ```
 
 ## 知識の束
@@ -121,6 +138,12 @@ ruby tools/make_bundle.rb --root /path/to/family-mruby     # bundles/3.1.0/ と 
 中身: 決まり (`data/rules_ja.md`)、アプリの書き方 (skill `fmrb-app-new`)、API の型 (`sig/*.rbs` の型の行と 1 行の英語の要約)、
 エディタの雛形 3 つ、罠の表 (asterism の `docs/ruby_features.md` の app VM の ng・differs)、検査の型 (`checks.json`)、見本 3 つ。
 端末の版の束が無ければ、近い古い版の束を使い、記録に `bundle_fallback` を残す。
+
+## サーバで動かす
+
+`deploy/vps/` で、Asterism console の隣のコンテナとして動かす (イメージは `ghcr.io/ruby-asterism/asterism-tutor`。
+タグ `v<版>` で `.github/workflows/image.yml` が作る)。自分の証明書でルータにつなぎ、使える端末は console の
+ルータの役割で決める。手順は [docs/install.md](docs/install.md) (英語)。
 
 ## 未確認のこと
 
