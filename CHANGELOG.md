@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.1
+
+- Ruby 3.4.13 in the image (`ruby:3.4.13-slim`), for the Regexp and String case conversion fixes of 2026-11-18 (heap overflows, a double free and out-of-bounds reads in 3.4.0-3.4.12).
+  No change in the gem.
+
 ## 0.2.0
 
 Runs as a container next to an Asterism console (docs/install.md).

@@ -31,7 +31,7 @@ name: asterism-tutor
 
 services:
   tutor:
-    image: ${TUTOR_IMAGE:-ghcr.io/ruby-asterism/asterism-tutor}:${TUTOR_VERSION:-0.2.0}
+    image: ${TUTOR_IMAGE:-ghcr.io/ruby-asterism/asterism-tutor}:${TUTOR_VERSION:-0.2.1}
     init: true
     restart: unless-stopped
     # SIGTERM: no new requests, the ones being worked on get

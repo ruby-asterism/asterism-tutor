@@ -13,7 +13,7 @@
 # No key is in the image: the LLM key is ANTHROPIC_API_KEY in the
 # container's environment (deploy/vps/.env), the router's certificate is
 # mounted read-only at /credentials.
-ARG RUBY_VERSION=3.4.11
+ARG RUBY_VERSION=3.4.13
 FROM ruby:${RUBY_VERSION}-slim AS build
 
 RUN apt-get update -qq && \
