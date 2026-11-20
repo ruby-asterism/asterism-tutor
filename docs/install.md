@@ -144,10 +144,10 @@ and `:latest`; amd64), built by the repository's CI from the tag
 `v<version>`. It holds the gem with its knowledge bundle and rules.
 
 ```
-./update.sh 0.2.1         # checks out v0.2.1, pulls its image and starts it
+./update.sh 0.2.2         # checks out v0.2.2, pulls its image and starts it
 ```
 
-By hand, the same is `git checkout v0.2.1`, `TUTOR_VERSION=0.2.1` in
+By hand, the same is `git checkout v0.2.2`, `TUTOR_VERSION=0.2.2` in
 `.env`, then `docker compose pull && docker compose up -d`.
 
 ### Building the image yourself
@@ -158,7 +158,7 @@ docker compose up -d
 ```
 
 Give it a name of your own in `.env` first (`TUTOR_IMAGE=asterism-tutor-local`),
-so a later pull does not replace it. `./update.sh --build 0.2.1` does the
+so a later pull does not replace it. `./update.sh --build 0.2.2` does the
 same from the version's tag.
 
 ## 6. Check
@@ -166,9 +166,9 @@ same from the version's tag.
 ```
 docker compose ps                                   # tutor: running (healthy)
 docker compose exec tutor bundle exec exe/asterism-tutor status
-      # asterism-tutor 0.2.1 tutor/tutor/helper: up, joined to tls/zenohd:7448 (... 0 working, today 0 requests, $0.0000)
+      # asterism-tutor 0.2.2 tutor/tutor/helper: up, joined to tls/zenohd:7448 (... 0 working, today 0 requests, $0.0000)
 docker compose logs --tail 5 tutor
-      # asterism-tutor 0.2.1: tutor/tutor/helper on tls/zenohd:7448 (llm: anthropic)
+      # asterism-tutor 0.2.2: tutor/tutor/helper on tls/zenohd:7448 (llm: anthropic)
       # asterism-tutor: model claude-haiku-5-5, 50 requests a device a day, $1.0 a day in all
 ```
 
@@ -189,7 +189,7 @@ router comes back.
 ```
 ./update.sh 0.2.2                 # the new version
 ./update.sh --when-idle 0.2.2     # restart only once no request is being worked on
-./update.sh 0.2.1                 # back to the version before (its image is kept)
+./update.sh 0.2.2                 # back to the version before (its image is kept)
 ```
 
 A restart (an update, `docker compose restart`, the server's reboot) does

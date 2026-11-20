@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.2
+
+- The Japanese messages a device shows call the gem "AI ホスト" (the stop and stopping messages; the device's own text says the same from Family mruby develop of 2026-11-20).
+- `deploy/vps/update.sh`: the status it asks the running container for reads no input, so it does not wait on the terminal (seen once with `sudo-rs` on Ubuntu 26.04 over ssh; the cause is not pinned down).
+
 ## 0.2.1
 
 - Ruby 3.4.13 in the image (`ruby:3.4.13-slim`), for the Regexp and String case conversion fixes of 2026-11-18 (heap overflows, a double free and out-of-bounds reads in 3.4.0-3.4.12).

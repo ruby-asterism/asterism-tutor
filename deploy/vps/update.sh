@@ -183,7 +183,7 @@ main() {
     else
       waited=0
       while :; do
-        line=$(compose exec -T tutor bundle exec exe/asterism-tutor status 2>&1)
+        line=$(compose exec -T tutor bundle exec exe/asterism-tutor status </dev/null 2>&1)
         case "$line" in
           *" 0 working"*) break ;;
           *" working"*) ;;
@@ -206,7 +206,7 @@ main() {
     say "(would wait until the tutor runs on $IMAGE:$VERSION and says it is up)"
   else
     tries=0
-    until compose exec -T tutor bundle exec exe/asterism-tutor status; do
+    until compose exec -T tutor bundle exec exe/asterism-tutor status </dev/null; do
       tries=$((tries + 1))
       [ "$tries" -ge 30 ] && die "the tutor is not up after 60 s (docker compose logs tutor)"
       sleep 2
