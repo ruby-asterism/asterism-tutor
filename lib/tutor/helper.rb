@@ -74,7 +74,7 @@ module Tutor
       error = "#{error.byteslice(0, emax).scrub('')}..." if error.bytesize > emax
       if @jobs.closing?
         @log.write(:refused, device: from, call: "ask", mode: mode, why: "stopping")
-        return { "error" => "stopping", "message" => "AI の係が止まるところです。少し待ってからもう一度送ってください。" }
+        return { "error" => "stopping", "message" => "AI ホストが止まるところです。少し待ってからもう一度送ってください。" }
       end
       return { "error" => "busy", "message" => "前の頼みがまだ終わっていません。" } if @store.active?(from)
       if (refusal = @limits.refuse(from))

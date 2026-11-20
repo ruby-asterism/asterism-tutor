@@ -13,7 +13,7 @@ module Tutor
     EXPLAIN_MAX = 4096
     # What a device reads for a request the gem could not finish because it
     # stopped (SIGTERM after jobs.stop_grace_s, or a crash found at start).
-    STOPPED = "AI の係が止まったので、答えを作れませんでした。もう一度送ってください。".freeze
+    STOPPED = "AI ホストが止まったので、答えを作れませんでした。もう一度送ってください。".freeze
 
     def initialize(cfg, store:, log:, limits:, bundles:, llm:)
       @cfg = cfg

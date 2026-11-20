@@ -196,7 +196,7 @@ A restart (an update, `docker compose restart`, the server's reboot) does
 not lose the records, the results the devices have not fetched yet or the
 day's counts and cost (the volume). A request being worked on at the
 moment gets 8 seconds (`ASTERISM_TUTOR_STOP_GRACE`) to end; after that it
-fails as "stopped" and the device shows "AI の係が止まったので、答えを作れません
+fails as "stopped" and the device shows "AI ホストが止まったので、答えを作れません
 でした。もう一度送ってください。" when it asks again; it is not counted in
 the device's requests of the day. A new request during the stop is told the
 helper is stopping. The conversation so far (the last few

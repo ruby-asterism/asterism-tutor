@@ -97,7 +97,7 @@ bundle exec exe/asterism-tutor --config tutor.toml --llm anthropic --model claud
 (`ROUTER`・`CREDENTIALS`・`NODE`・`DEVICES`・`LLM`・`MODEL`・`PER_DAY`・`COST_PER_DAY`・`LOG_DIR`・`STATE_DIR`・`MAKE`・`FIX`・
 `STOP_GRACE`、設定のファイルは `ASTERISM_TUTOR_CONFIG`)。LLM の鍵は今のまま `ANTHROPIC_API_KEY` だけ。
 上限の「1 日」(と記録のファイルの日付) は、プロセスの地方時 (`TZ`) の日付。コンテナの既定は `Asia/Tokyo`
-(`deploy/vps/.env` の `TUTOR_TZ`)。係が止まったせいで失敗した頼み (`stopped`) は、その日の回数に数えない (LLM の費用は数える)。
+(`deploy/vps/.env` の `TUTOR_TZ`)。AI ホストが止まったせいで失敗した頼み (`stopped`) は、その日の回数に数えない (LLM の費用は数える)。
 
 ## 端末から呼ぶ形 (`<node>/tutor/helper`)
 
