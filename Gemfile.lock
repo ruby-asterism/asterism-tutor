@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    asterism-tutor (0.2.2)
+    asterism-tutor (0.3.0)
       anthropic (~> 1.80.0)
       asterism (>= 0.14)
       msgpack (~> 1.7)
@@ -49,7 +49,7 @@ DEPENDENCIES
 CHECKSUMS
   anthropic (1.80.0) sha256=d02c7d532726c195b83de4d7355aaa0462b127f74f74d0b9540b3113356d0ea1
   asterism (0.14.0) sha256=ab36d5de83a113f9cfb2b6ff8fd14a61b75c3380944ddf3f7be21d7da9a1c0bb
-  asterism-tutor (0.2.2)
+  asterism-tutor (0.3.0)
   asterism-zenoh (0.4.2) sha256=d900d449b5a7fbe5ccd0f6cc80cce82ced55960f9bcb4cd5e4ad3f6f3b91d932
   base64 (0.3.0) sha256=27337aeabad6ffae05c265c450490628ef3ebd4b67be58257393227588f5a97b
   connection_pool (3.0.3) sha256=e0f8ee3ee0039396753e06e8a2dde0ef028e40f7df29e97f57da7577c489cb5e
