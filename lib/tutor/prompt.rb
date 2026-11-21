@@ -1,7 +1,18 @@
 module Tutor
   # What goes to the LLM besides the bundle, and reading its answer.
   module Prompt
+    TOOLS_RULES = File.read(File.expand_path("../../data/tools_ja.md", __dir__)).freeze
+    # Put after the tool results of the last round of look-ups allowed.
+    LOOKUP_DONE = "調べ物の上限に達した。これ以上は調べられない。ここまでの材料で、決まった形で答えて。".freeze
+    # When the time left is short.
+    LOOKUP_LATE = "時間が足りないので、これ以上は調べられない。ここまでの材料で、決まった形で答えて。".freeze
+
     module_function
+
+    # The fixed text of every request (the same bytes for the same bundle).
+    def system(bundle_text, tools:)
+      tools ? "#{bundle_text}#{TOOLS_RULES}" : bundle_text
+    end
 
     MODE_TEXT = {
       "ask" => "使い方: 質問。子どもの質問に答える。文書は変えない。<explain> だけを書く。",

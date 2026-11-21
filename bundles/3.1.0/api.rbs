@@ -280,7 +280,7 @@ class FmrbApp
   # Send a message to another app
   def send_message: (Integer dest_pid, Integer msg_type, untyped data) -> void
   # Ask for a file chooser
-  def request_file_select: (String mode) -> void
+  def request_file_select: (String mode, ?dir: String) -> void
   # request_file_select with nothing left out
   def request_file_select_raw: (String mode) -> void
   # Run a file as an app
@@ -494,6 +494,7 @@ class FmrbGfx
   type composite_region = { src_x: int16, src_y: int16, dst_x: int16, dst_y: int16, w: int16, h: int16, transparent: bool }
   type video_info = { width: uint16, height: uint16 }
   type video_status = { state: uint8, shown: uint32, dropped: uint32 }
+  type picture_info = { width: uint16, height: uint16, format: uint8, bytes: uint32, mtime: uint32 }
   BLACK: Integer
   WHITE: Integer
   RED: Integer
@@ -604,6 +605,26 @@ class FmrbGfx
   def draw_tile: (Integer image_id, Integer src_x, Integer src_y, Integer w, Integer h) -> FmrbGfx
   # draw_tile with nothing left out
   def draw_tile_raw: (Integer image_id, Integer src_x, Integer src_y, Integer w, Integer h, Integer dst_x, Integer dst_y) -> FmrbGfx
+  # draw_tile drawn larger or smaller
+  def draw_tile_scaled_raw: (Integer image_id, Integer src_x, Integer src_y, Integer w, Integer h, Integer dst_x, Integer dst_y, Integer scale, Integer clip_x, Integer clip_y, Integer clip_w, Integer clip_h) -> FmrbGfx
+  # Read a picture file's width and height
+  def picture_info: (String path) -> picture_info?
+  # Draw a picture file, reading it in the first time
+  def draw_picture: (String path, Integer x, Integer y) -> bool
+  # A picture's width and height, as [w, h]
+  def picture_size: (String path) -> Array[Integer]?
+  # Put RGB332 pixels in the picture store by name
+  def put_picture: (String name, Integer width, Integer height, String pixels) -> bool
+  # Let go of one picture in the picture store
+  def release_picture: (String path) -> FmrbGfx
+  # Let go of every picture in the picture store
+  def release_pictures: () -> FmrbGfx
+  # How many pictures the picture store keeps
+  def picture_limit=: (Integer n) -> Integer
+  # Why the last picture could not be drawn
+  def picture_error: () -> Symbol?
+  # Draw the checkerboard that stands for transparency
+  def draw_checker: (Integer x, Integer y, Integer w, Integer h) -> FmrbGfx
   # Make a mask
   def create_mask: (Integer width, Integer height, bin data) -> Integer
   # Let go of a mask
@@ -636,6 +657,8 @@ class FmrbGfx
   def delete_sprite_image: (Integer image_id) -> FmrbGfx
   # Read a PNG or BMP into a sprite image
   def load_sprite_image: (Integer image_id, String path) -> FmrbGfx
+  # Write RGB332 pixels into a sprite image
+  def write_sprite_image: (Integer image_id, Integer x, Integer y, Integer w, Integer h, bin pixels) -> FmrbGfx
   # Draw into a sprite image
   def set_sprite_image_target: (Integer image_id) -> FmrbGfx
   # Place sprite images on the canvas
@@ -960,6 +983,21 @@ class P5
   # Draw an image through a mask
   def image_masked: (Integer image_id, String mask_data, Integer x, Integer y, Integer w, Integer h) -> void
 end
+# fmrb_picture.rbs
+module BMP332
+  # Read a PNG or BMP file into RGB332 pixels
+  def self.load: (String path) -> Hash
+  # Turn PNG or BMP bytes into RGB332 pixels
+  def self.parse: (String data) -> Hash
+  # Write RGB332 pixels as a PNG or a BMP file
+  def self.save: (String path, Integer width, Integer height, String pixels) -> void
+  # Encode RGB332 pixels as palette PNG bytes
+  def self.encode_png: (Integer width, Integer height, String pixels) -> String
+  # A picture's size and kind, without decoding it
+  def self.info: (String path) -> Hash?
+  # Rewrite a picture as a small palette PNG
+  def self.to_png: (String path) -> Hash
+end
 # fmrb_sprite.rbs
 class SpriteImage
   # This image's number
@@ -978,6 +1016,8 @@ class SpriteImage
   def draw: () -> void
   # Read a PNG or BMP into this image
   def load_bmp: (String path) -> void
+  # Write RGB332 pixels into this image
+  def write_pixels: (String pixels) -> void
   # Let go of this image
   def destroy: () -> void
 end

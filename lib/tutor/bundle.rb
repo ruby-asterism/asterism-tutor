@@ -17,7 +17,7 @@ module Tutor
       ["samples", "見本のアプリ (samples)"]
     ].freeze
 
-    attr_reader :fw, :asked, :dir, :checks, :text
+    attr_reader :fw, :asked, :dir, :checks, :text, :source
 
     def self.pick(root, fw)
       versions = JSON.parse(File.read(File.join(root, "index.json")))["versions"]
@@ -28,10 +28,18 @@ module Tutor
       exact || sorted.reverse.find { Gem::Version.new(_1) <= want } || sorted.first
     end
 
-    def initialize(root, fw)
+    # root: a directory of bundles by version (index.json), or, with dir:,
+    # the one bundle in dir (made from the sources at source, a ref).
+    def initialize(root, fw, dir: nil, source: nil)
       @asked = fw.to_s
-      @fw = Bundle.pick(root, fw)
-      @dir = File.join(root, @fw)
+      @source = source
+      if dir
+        @fw = fw.to_s
+        @dir = dir
+      else
+        @fw = Bundle.pick(root, fw)
+        @dir = File.join(root, @fw)
+      end
       @checks = JSON.parse(File.read(File.join(@dir, "checks.json")))["checks"]
       @text = build_text.freeze
     end
@@ -39,7 +47,7 @@ module Tutor
     def fallback? = @fw != @asked
 
     def build_text
-      out = +"# Family mruby の知識 (ファームの版 #{@fw})\n\n"
+      out = +"# Family mruby の知識 (ファームの版 #{@fw}#{@source && @source != @fw ? "、ソースは #{@source}" : ''})\n\n"
       PARTS.each do |name, title|
         path = File.join(@dir, name)
         out << "## #{title}\n\n"

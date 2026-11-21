@@ -1,21 +1,21 @@
 {
   "fw": "3.1.0",
   "made_from": {
-    "core": "2c012d9102a5c05d00c5948fff8085905bebb2e2",
-    "root": "a90feead36cde9f31f2050591e93e1d67cc4f4f6",
+    "core": "e9d6875743eea03e8a7a093b77458d3e4559b1a0",
+    "root": "63f133d9d0bac49bc3217661af5c2f04e194beb6",
     "asterism": "da1c382e423ebda735c7c758825fc824addc6d96"
   },
-  "made_at": "2026-11-17T14:42:16Z",
+  "made_at": "2026-11-21T23:02:30Z",
   "files": [
     {
       "path": "api.rbs",
-      "bytes": 61138,
-      "tokens_est": 15285
+      "bytes": 63322,
+      "tokens_est": 15831
     },
     {
       "path": "app_guide.md",
-      "bytes": 17955,
-      "tokens_est": 5384
+      "bytes": 19017,
+      "tokens_est": 5710
     },
     {
       "path": "checks.json",
@@ -63,6 +63,8 @@
       "tokens_est": 363
     }
   ],
-  "bytes": 110163,
-  "tokens_est": 28713
+  "bytes": 113409,
+  "tokens_est": 29585,
+  "checks": 50,
+  "pitfalls": 70
 }

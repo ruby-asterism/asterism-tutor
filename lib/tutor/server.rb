@@ -9,7 +9,7 @@ module Tutor
     APP = "tutor".freeze
     OBJECT = "helper".freeze
 
-    attr_reader :cfg, :store, :log, :limits, :jobs, :helper, :llm
+    attr_reader :cfg, :store, :log, :limits, :jobs, :helper, :llm, :knowledge
 
     def initialize(cfg, llm: nil, clock: -> { Time.now })
       @cfg = cfg
@@ -17,7 +17,8 @@ module Tutor
       @store = Store.new(cfg, clock: clock)
       @limits = Limits.new(cfg, @log, clock: clock)
       @llm = llm || LLM.make(cfg)
-      @jobs = Jobs.new(cfg, store: @store, log: @log, limits: @limits, bundles: Bundles.new(cfg.bundle_dir), llm: @llm)
+      @knowledge = Knowledge.new(cfg, log: @log, clock: clock)
+      @jobs = Jobs.new(cfg, store: @store, log: @log, limits: @limits, knowledge: @knowledge, llm: @llm)
       @helper = Helper.new(cfg, store: @store, log: @log, limits: @limits, jobs: @jobs)
       @stop_q = Queue.new
       @since = Time.now
@@ -29,7 +30,10 @@ module Tutor
       path = net.expose(OBJECT, @helper, caller: :from, methods: Helper::METHODS,
                                          doc: "Family mruby AI helper: ask, hint, make and fix over Asterism")
       @log.write(:start, path: path, llm: @cfg.dig("llm", "provider"), model: @cfg.dig("llm", "model"),
-                         devices: @cfg.dig("network", "devices"), modes: @cfg.modes, version: VERSION)
+                         devices: @cfg.dig("network", "devices"), modes: @cfg.modes, version: VERSION,
+                         sources: @knowledge.sources ? @knowledge.sources.dir : nil, lookup_rounds: @cfg.dig("lookup", "rounds"))
+      # the sources are fetched now (in the background) and every day
+      @knowledge.start
       path
     end
 
@@ -83,6 +87,7 @@ module Tutor
       code
     ensure
       @jobs.stop
+      @knowledge.stop
       write_status(stopped: true) if @path
     end
 
@@ -116,7 +121,7 @@ module Tutor
         "exposed" => exposed, "stopping" => stopping || stopped, "stopped" => stopped,
         "llm" => @cfg.dig("llm", "provider"), "model" => @cfg.dig("llm", "model"),
         "active" => @store.active_ids.size, "requests_today" => @limits.requests_today,
-        "cost_today" => @limits.cost_today.round(6) }
+        "cost_today" => @limits.cost_today.round(6), "sources" => @knowledge.sources&.status }
     end
 
     def write_status(**kw)

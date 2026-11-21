@@ -41,6 +41,7 @@ module Tutor
       return [2, "#{head}: the status is #{age.round} s old (the gem has stopped or hangs)"] if age > max_age
       tail = "since #{data['since']}, llm #{data['llm']} (#{data['model']}), #{data['active'].to_i} working, " \
              "today #{data['requests_today'].to_i} requests, $#{format('%.4f', data['cost_today'].to_f)}"
+      tail += ", #{sources_text(data['sources'])}"
       return [1, "#{head}: stopping (#{tail})"] if data["stopping"]
       unless data["connected"]
         why = data["reconnecting"] ? "the router is away, joining it again" : "not joined to the router"
@@ -48,6 +49,15 @@ module Tutor
       end
       return [1, "#{head}: joined, but the helper is not exposed (#{tail})"] unless data["exposed"]
       [0, "#{head}: up, joined to #{data['router']} (#{tail})"]
+    end
+
+    # "sources develop@0123456789ab (fetched ...)" or why there are none.
+    def self.sources_text(s)
+      return "sources off (the bundle in the gem)" unless s.is_a?(Hash)
+      refs = (s["refs"] || {}).map { |ref, r| "#{ref}@#{r['core']} (fetched #{r['fetched_at']}, checked #{r['checked_at']})" }
+      errs = (s["errors"] || {}).map { |ref, e| "#{ref}: #{e['message']} at #{e['at']}" }
+      out = refs.empty? ? "sources: none yet (the bundle in the gem)" : "sources #{refs.join(', ')}"
+      errs.empty? ? out : "#{out}; last errors: #{errs.join('; ')}"
     end
   end
 end

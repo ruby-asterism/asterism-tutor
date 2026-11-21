@@ -1,9 +1,15 @@
 module Tutor
   # The LLM behind one interface:
-  #   complete(system:, messages:, meta:) -> {"text", "usage" => {"in", "out", "cache_write", "cache_read"}, "model", "stop"}
+  #   complete(system:, messages:, meta:, tools: nil, tool_choice: nil, timeout: nil)
+  #     -> {"text", "usage" => {"in", "out", "cache_write", "cache_read"}, "model", "stop",
+  #         "content" => the answer's blocks as message content (to send back with tool results),
+  #         "tool_calls" => [{"id", "name", "input"}]}
   # system is the bundle's text (cached by the provider when it can); messages
   # the talk and the request ([{role:, content:}]); meta what the fake needs
-  # (mode, attempt). Errors are LLM::Error with a kind the device can show.
+  # (mode, attempt); tools the tool definitions (Lookup.tools), tool_choice
+  # "auto" or "none" (the tools stay defined, so the turns that used them
+  # can be sent, but no new call is made); timeout seconds for this call.
+  # Errors are LLM::Error with a kind the device can show.
   module LLM
     class Error < StandardError
       attr_reader :kind
@@ -32,25 +38,37 @@ module Tutor
         @client = ::Anthropic::Client.new(max_retries: 0, timeout: cfg.dig("llm", "timeout_s").to_f)
       end
 
-      def complete(system:, messages:, meta: {})
+      def complete(system:, messages:, meta: {}, tools: nil, tool_choice: nil, timeout: nil)
         params = {
           model: @cfg.dig("llm", "model").to_sym,
           max_tokens: @cfg.dig("llm", "max_tokens"),
           system_: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
           messages: messages
         }
+        if tools
+          params[:tools] = tools
+          params[:tool_choice] = { type: (tool_choice || "auto").to_sym }
+          # the turns of the look-ups are cached too, for the next round
+          params[:cache_control] = { type: :ephemeral }
+        end
         effort = @cfg.dig("llm", "effort").to_s
         params[:output_config] = { effort: effort.to_sym } unless effort.empty?
-        msg = @client.messages.create(**params)
+        opts = timeout ? { request_options: { timeout: timeout.to_f } } : {}
+        msg = @client.messages.create(**params, **opts)
         text = msg.content.select { _1.type == :text }.map(&:text).join
+        calls = msg.content.select { _1.type == :tool_use }.map { { "id" => _1.id, "name" => _1.name, "input" => _1.input } }
         u = msg.usage
         {
           "text" => text,
           "usage" => { "in" => u.input_tokens.to_i, "out" => u.output_tokens.to_i,
                        "cache_write" => u.cache_creation_input_tokens.to_i, "cache_read" => u.cache_read_input_tokens.to_i },
           "model" => msg.model.to_s,
-          "stop" => msg.stop_reason.to_s
+          "stop" => msg.stop_reason.to_s,
+          "content" => msg.content.filter_map { block_param(_1) },
+          "tool_calls" => calls
         }
+      rescue ::Anthropic::Errors::APITimeoutError
+        raise Error.new("timeout", "the LLM did not answer in time")
       rescue ::Anthropic::Errors::AuthenticationError, ::Anthropic::Errors::PermissionDeniedError => e
         raise Error.new("auth", "the LLM refused the key (#{e.class.name.split('::').last})")
       rescue ::Anthropic::Errors::RateLimitError
@@ -59,6 +77,16 @@ module Tutor
         raise Error.new("network", "cannot reach the LLM (#{e.class.name.split('::').last})")
       rescue ::Anthropic::Errors::APIStatusError => e
         raise Error.new("api", "the LLM answered #{e.status}")
+      end
+
+      # A block of the answer as it goes back in the next request.
+      def block_param(b)
+        case b.type
+        when :text then { type: "text", text: b.text }
+        when :tool_use then { type: "tool_use", id: b.id, name: b.name, input: b.input }
+        when :thinking then { type: "thinking", thinking: b.thinking, signature: b.signature }
+        when :redacted_thinking then { type: "redacted_thinking", data: b.data }
+        end
       end
     end
 
@@ -73,6 +101,12 @@ module Tutor
     #   [[wait N]]         waits N seconds first (up to 120; for trying a
     #                      device by hand: edit, kill the app, stop the gem)
     #   [[noapp]]          make: code without a FmrbApp class every time
+    # and, when the tools are offered (tool_choice "auto"):
+    #   [[search TEXT]]    first round: search_source for TEXT
+    #   [[read PATH]]      the round after the searches: read_source PATH
+    #   [[lookup_loop]]    a search in every round it is allowed to
+    # The answer after look-ups tells the first line of each tool result
+    # ("(調べた: ...)"), so a test sees what came back.
     class Fake
       attr_reader :calls
 
@@ -81,10 +115,10 @@ module Tutor
         @lock = Mutex.new
       end
 
-      def complete(system:, messages:, meta: {})
+      def complete(system:, messages:, meta: {}, tools: nil, tool_choice: nil, timeout: nil)
         @lock.synchronize { @calls += 1 }
         last = messages.last[:content].to_s
-        first_req = messages.reverse.find { _1[:role] == "user" && _1[:content].to_s.include?("<child>") }[:content].to_s
+        first_req = messages.reverse.find { _1[:role] == "user" && _1[:content].is_a?(String) && _1[:content].include?("<child>") }[:content].to_s
         child = first_req[%r{<child>\n(.*?)\n</child>}m, 1].to_s
         sleep 1.5 if child.include?("[[slow]]")
         if (secs = child[/\[\[wait (\d+)\]\]/, 1])
@@ -92,11 +126,41 @@ module Tutor
         end
         history_turns = (messages.index { _1[:content].to_s.equal?(first_req) } || 0) / 2
         attempt = meta[:attempt].to_i
+        start = messages.index { _1[:content].equal?(first_req) || _1[:content] == first_req } || 0
+        results = messages[start..].select { _1[:role] == "user" && _1[:content].is_a?(Array) }
+                                   .flat_map { |m| m[:content].select { _1[:type] == "tool_result" } }
+        rounds = messages[start..].count { _1[:role] == "user" && _1[:content].is_a?(Array) }
+        first = attempt.zero? && rounds.zero?
+        usage = { "in" => LLM.estimate(last), "out" => 0,
+                  "cache_write" => first ? LLM.estimate(system) : 0, "cache_read" => first ? 0 : LLM.estimate(system) }
+        if tools && tool_choice.to_s != "none" && (calls = tool_calls(child, rounds))
+          return { "text" => "", "usage" => usage.merge("out" => 20), "model" => "fake", "stop" => "tool_use",
+                   "content" => calls.map { { type: "tool_use", id: _1["id"], name: _1["name"], input: _1["input"] } },
+                   "tool_calls" => calls }
+        end
         text = answer(meta[:mode], child, first_req, attempt, history_turns, last)
-        { "text" => text,
-          "usage" => { "in" => LLM.estimate(last), "out" => LLM.estimate(text),
-                       "cache_write" => attempt.zero? ? LLM.estimate(system) : 0, "cache_read" => attempt.zero? ? 0 : LLM.estimate(system) },
-          "model" => "fake", "stop" => "end_turn" }
+        unless results.empty?
+          seen = results.map { _1[:content].to_s.lines.first.to_s.strip }
+          text = text.sub("<explain>", "<explain>(調べた: #{seen.join(' / ')}) ")
+        end
+        { "text" => text, "usage" => usage.merge("out" => LLM.estimate(text)), "model" => "fake", "stop" => "end_turn",
+          "content" => [{ type: "text", text: text }], "tool_calls" => [] }
+      end
+
+      # The tool calls the markers ask for in this round, or nil.
+      def tool_calls(child, rounds)
+        searches = child.scan(/\[\[search ([^\]]+)\]\]/).flatten
+        reads = child.scan(/\[\[read ([^\]]+)\]\]/).flatten
+        want =
+          if child.include?("[[lookup_loop]]")
+            [["search_source", { "pattern" => "loop #{rounds}" }]]
+          elsif rounds.zero? && !searches.empty?
+            searches.map { ["search_source", { "pattern" => _1 }] }
+          elsif rounds == (searches.empty? ? 0 : 1) && !reads.empty?
+            reads.map { ["read_source", { "path" => _1, "from" => 1, "to" => 5 }] }
+          end
+        return nil unless want
+        want.each_with_index.map { |(n, input), i| { "id" => "toolu_fake_#{rounds}_#{i}", "name" => n, "input" => input } }
       end
 
       APP = <<~RUBY.freeze

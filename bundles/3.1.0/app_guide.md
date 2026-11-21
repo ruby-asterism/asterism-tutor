@@ -85,7 +85,8 @@ launcher_visible = true
 
 ### 鍵のあれこれ
 
-- 窓サイズは画面に収まる値にする (Retro 320x240 / Modern 426x240)。
+- 窓サイズは画面に収まる値にする (Retro 320x240 / Modern 426x240。P4-Nano の
+  既定は 640x360 だが、426x240 に収まる大きさなら両方で出る)。
 - 起動が重い/スタックが要るときは `task_stack_kb` を書ける。
 - 同時に 2 つ動いては困るアプリは宣言で断れる (エラーの窓が出る。書かなければ
   何個でも開ける):
@@ -102,9 +103,21 @@ launcher_visible = true
   - `needs_pointer = false`: マウス・タッチなしで全部の操作ができる。書いて
     いないアプリはマウスが要るものとみなされる。
   - 鍵の表は fmruby-core/doc/app-distribution/spec.md 3.1 節。
-- 全画面で細かく描きたいアプリ (エディタ型) は `fullscreen_hires = true` を
-  書くと、Modern とブラウザ版で全画面の間だけ 640x360 になる。大きさは
-  `on_resize` で受けて組み直す。詳細は fmruby-core/doc/reference/fullscreen_hires.md。
+- 全画面のアプリの画面の大きさ (Modern の画面は 426x240 か 640x360。P4-Nano の
+  既定は 640x360、Tab5・sim・ブラウザ版は 426x240)。宣言は 2 つ:
+  - 何も書かない: 426x240 向けとして扱う。426x240 の画面ではそのまま、
+    640x360 の画面ではこのアプリが全画面の一番上にいる間だけ画面が 426x240
+    (3 倍) に切り替わり、426x240 のときと同じ絵になる。固定の配置で描く
+    ゲーム・デモはこれでよい。
+  - `fullscreen_hires = true`: 全画面で細かく描きたいアプリ (エディタ型)。
+    426x240 の画面では全画面の間だけ 640x360 になり、640x360 の画面では
+    切り替えずにそのまま 640x360。
+  - `fullscreen_any_size = true`: 届いた大きさから配置を決めるアプリ。
+    640x360 の画面でも 426x240 に切り替えず、640x360 の全画面で動く
+    (426x240 の画面では何も変わらない)。`@window_width` / `@window_height`
+    と `on_resize` から配置を決めること (固定の座標が残ると左上に寄る)。
+  - どちらの宣言でも大きさは `on_resize` で受けて組み直す。詳細は
+    fmruby-core/doc/reference/fullscreen_hires.md。
 
 ## 描画
 

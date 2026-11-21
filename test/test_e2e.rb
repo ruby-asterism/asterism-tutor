@@ -3,6 +3,7 @@ require "asterism"
 require "open3"
 require "fileutils"
 require_relative "sender"
+require_relative "sources_fixture"
 
 # The gem as a process (exe/asterism-tutor, fake LLM) on a local router, called
 # by test/sender.rb the way a device will. `rake e2e` starts the router.
@@ -67,6 +68,7 @@ class TestE2E < Minitest::Test
     @ready = true
     skip_all = ROUTER.empty?
     return if skip_all
+    @repos = SourcesFixture.build(WORK)
     @servers << start("main", <<~TOML)
       [network]
       router = "#{ROUTER}"
@@ -78,6 +80,9 @@ class TestE2E < Minitest::Test
       [store]
       log_dir = "#{WORK}/log_main"
       state_dir = "#{WORK}/state_main"
+      [sources]
+      core = "#{@repos[:core]}"
+      asterism = "#{@repos[:asterism]}"
     TOML
     @servers << start("off", <<~TOML)
       [network]
@@ -94,6 +99,8 @@ class TestE2E < Minitest::Test
       [store]
       log_dir = "#{WORK}/log_off"
       state_dir = "#{WORK}/state_off"
+      [sources]
+      enabled = false
     TOML
     Minitest.after_run do
       @nets.each_value { _1.close rescue nil }
@@ -130,6 +137,24 @@ class TestE2E < Minitest::Test
     assert_equal %w[ask hint make fix], h["modes"]
     assert_equal 8192, h["piece"]
     assert_equal "test helper", h["name"]
+  end
+
+  # The sources fetched at start (local repositories) and a request that
+  # looks them up through the router.
+  def test_ask_with_look_ups
+    r = nil
+    t = Time.now
+    loop do # the first fetch runs in the background after start
+      r = sender("fmruby-aaa001").run(req("ask", "絵を出すには? [[search draw_picture]]"))
+      break if r["explain"].include?("調べた") || Time.now - t > 15
+      sleep 0.5
+    end
+    assert_equal "answer", r["kind"], r.inspect
+    assert_includes r["explain"], "(調べた: 1 matches:"
+    tools = log_records.select { _1["ev"] == "tool" }
+    assert(tools.any? { _1["info"]["pattern"] == "draw_picture" })
+    k = log_records.select { _1["ev"] == "knowledge" }.last
+    assert_equal "sources", k["origin"]["kind"]
   end
 
   def test_ask

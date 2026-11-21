@@ -15,12 +15,12 @@ module Tutor
     # stopped (SIGTERM after jobs.stop_grace_s, or a crash found at start).
     STOPPED = "AI ホストが止まったので、答えを作れませんでした。もう一度送ってください。".freeze
 
-    def initialize(cfg, store:, log:, limits:, bundles:, llm:)
+    def initialize(cfg, store:, log:, limits:, knowledge:, llm:)
       @cfg = cfg
       @store = store
       @log = log
       @limits = limits
-      @bundles = bundles
+      @knowledge = knowledge
       @llm = llm
       @queue = Queue.new
       @threads = Array.new(cfg.dig("jobs", "workers").to_i.clamp(1, 8)) do
@@ -103,6 +103,7 @@ module Tutor
       case e.kind
       when "rate" then "AI が混んでいます。少し待ってからもう一度聞いてください。"
       when "network" then "親の PC から AI につながりません。"
+      when "timeout" then "AI の答えが時間内に返りませんでした。もう一度聞いてください。"
       when "auth", "config" then "親の PC の AI の設定に問題があります。親に知らせてください。"
       else "AI がうまく答えられませんでした。"
       end
@@ -122,27 +123,79 @@ module Tutor
     end
 
     def work(t)
+      use = @knowledge.acquire(t["req"]["fw"])
+      begin
+        answer(t, use)
+      ensure
+        @knowledge.release(use)
+      end
+    end
+
+    def mono = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+
+    # One request: the LLM (with its rounds of look-ups), the checks, and
+    # asking again when they fail.
+    def answer(t, use)
       id = t["id"]
       req = t["req"]
       mode = req["mode"]
       doc = t["doc"]
-      bundle = @bundles.for(req["fw"])
+      bundle = use.bundle
       if bundle.fallback?
         @log.write(:bundle_fallback, device: t["device"], ticket: id, asked: bundle.asked, used: bundle.fw)
       end
+      @log.write(:knowledge, device: t["device"], ticket: id, origin: use.origin)
+      lookup = use.lookup
+      system = Prompt.system(bundle.text, tools: !lookup.nil?)
+      tools = lookup&.tools
       history = @store.talk(t["device"]).flat_map { [{ role: "user", content: _1 }, { role: "assistant", content: _2 }] }
       messages = history + [{ role: "user", content: Prompt.request(req, doc) }]
       retries = @cfg.dig("limits", "retries").to_i
+      max_rounds = @cfg.dig("lookup", "rounds").to_i
+      timeout = @cfg.dig("llm", "timeout_s").to_f
+      used = { "rounds" => 0, "calls" => 0, "usage" => Hash.new(0), "cost_usd" => 0.0, "tools" => [] }
       attempt = 0
       loop do
         return finish_cancel(t) if cancelled?(id)
         set(id, "thinking")
-        res = @llm.complete(system: bundle.text, messages: messages, meta: { mode: mode, attempt: attempt })
-        cost = @cfg.cost(res["usage"])
-        @limits.add_cost(cost)
-        @log.write(:llm, device: t["device"], ticket: id, attempt: attempt, model: res["model"], bundle: bundle.fw,
-                         prompt: messages.last[:content], history_turns: history.size / 2,
-                         answer: res["text"], stop: res["stop"], usage: res["usage"], cost_usd: cost.round(6))
+        # One answer: its look-ups and the answer share timeout_s; with less
+        # than a third of it left, no more look-ups.
+        deadline = mono + timeout
+        res = nil
+        loop do
+          left = deadline - mono
+          raise LLM::Error.new("timeout", "no time left for the LLM (#{timeout} s)") if left <= 0
+          can_look = tools && used["rounds"] < max_rounds && left > timeout / 3
+          res = @llm.complete(system: system, messages: messages, meta: { mode: mode, attempt: attempt, round: used["rounds"] },
+                              tools: tools, tool_choice: tools && (can_look ? "auto" : "none"), timeout: left)
+          cost = @cfg.cost(res["usage"])
+          @limits.add_cost(cost)
+          used["calls"] += 1
+          used["cost_usd"] += cost
+          res["usage"].each { |k, v| used["usage"][k] += v.to_i }
+          calls = can_look ? Array(res["tool_calls"]) : []
+          first = messages.last[:content].is_a?(String)
+          @log.write(:llm, device: t["device"], ticket: id, attempt: attempt, round: used["rounds"], model: res["model"],
+                           bundle: bundle.fw, prompt: first ? messages.last[:content] : nil, history_turns: history.size / 2,
+                           answer: res["text"], tool_calls: calls.empty? ? nil : calls, stop: res["stop"],
+                           usage: res["usage"], cost_usd: cost.round(6))
+          break if calls.empty?
+          return finish_cancel(t) if cancelled?(id)
+          used["rounds"] += 1
+          results = calls.map do |c|
+            r = lookup.call(c["name"], c["input"])
+            used["tools"] << { "name" => c["name"] }.merge(r["info"])
+            @log.write(:tool, device: t["device"], ticket: id, round: used["rounds"], name: c["name"], input: c["input"],
+                              error: r["error"], info: r["info"], bytes: r["text"].bytesize, text: r["text"])
+            { type: "tool_result", tool_use_id: c["id"], content: r["text"], is_error: r["error"] }
+          end
+          if used["rounds"] >= max_rounds
+            results << { type: "text", text: Prompt::LOOKUP_DONE }
+          elsif deadline - mono <= timeout / 3
+            results << { type: "text", text: Prompt::LOOKUP_LATE }
+          end
+          messages += [{ role: "assistant", content: res["content"] }, { role: "user", content: results }]
+        end
         return finish_cancel(t) if cancelled?(id)
         set(id, "checking")
         parsed = Prompt.parse(res["text"])
@@ -150,7 +203,7 @@ module Tutor
         @log.write(:check, device: t["device"], ticket: id, attempt: attempt, ok: problems.empty?, problems: problems,
                            placed: outcome && outcome["placed"], left_out: outcome && outcome["left_out"])
         if problems.empty?
-          finish(t, parsed, outcome, bundle)
+          finish(t, parsed, outcome, bundle, used)
           return
         end
         attempt += 1
@@ -159,7 +212,8 @@ module Tutor
           fail_ticket(t, "check", "AI のコードが検査に通らなかったので、送りません (#{lines.join(' / ')})。", problems: problems)
           return
         end
-        messages += [{ role: "assistant", content: res["text"] }, { role: "user", content: Prompt.fix_request(mode, problems) }]
+        messages += [{ role: "assistant", content: res["content"] || res["text"] },
+                     { role: "user", content: Prompt.fix_request(mode, problems) }]
       end
     end
 
@@ -223,7 +277,7 @@ module Tutor
       "#{text.byteslice(0, max - 3).scrub('')}..."
     end
 
-    def finish(t, parsed, outcome, bundle)
+    def finish(t, parsed, outcome, bundle, used = nil)
       id = t["id"]
       mode = t["req"]["mode"]
       explain = parsed["explain"].dup
@@ -262,7 +316,7 @@ module Tutor
       return if @halted
       set(id, "done", "result" => result, "doc_pieces" => ps, "full_hints" => full_hints, "done_at" => Time.now)
       @store.add_turn(t["device"], Prompt.talk_user(t["req"], t["doc"]), Prompt.talk_assistant(parsed, result["kind"]))
-      @log.write(:result, device: t["device"], ticket: id, result: result, doc: text)
+      @log.write(:result, device: t["device"], ticket: id, result: result, doc: text, used: used)
     end
 
     # A hint result again on the document as it is now (report a0.md 4):

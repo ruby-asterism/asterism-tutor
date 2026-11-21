@@ -1,4 +1,5 @@
 require "tomlrb"
+require_relative "lookup"
 
 module Tutor
   # The settings (tutor.toml). Every key has a default; a file sets only what
@@ -24,7 +25,10 @@ module Tutor
       "ASTERISM_TUTOR_STATE_DIR" => ["store", "state_dir", :s],
       "ASTERISM_TUTOR_MAKE" => ["modes", "make", :b],
       "ASTERISM_TUTOR_FIX" => ["modes", "fix", :b],
-      "ASTERISM_TUTOR_STOP_GRACE" => ["jobs", "stop_grace_s", :f]
+      "ASTERISM_TUTOR_STOP_GRACE" => ["jobs", "stop_grace_s", :f],
+      "ASTERISM_TUTOR_SOURCES" => ["sources", "enabled", :b],
+      "ASTERISM_TUTOR_SOURCES_DIR" => ["sources", "dir", :s],
+      "ASTERISM_TUTOR_LOOKUP_ROUNDS" => ["lookup", "rounds", :i]
     }.freeze
     # The settings file when --config is not given.
     ENV_CONFIG = "ASTERISM_TUTOR_CONFIG".freeze
@@ -65,7 +69,26 @@ module Tutor
         "text_max" => 2048,
         "error_max" => 1024
       },
-      "bundle" => { "dir" => "" },     # "": the bundles in the gem
+      # "": the bundle made from the sources (or, without them, the bundles in
+      # the gem); a directory: the parent's own bundles (index.json, <fw>/)
+      "bundle" => { "dir" => "" },
+      # The Family mruby sources the gem clones and keeps (Tutor::Sources).
+      "sources" => {
+        "enabled" => true,
+        "dir" => "",                   # "": "sources" next to store.state_dir
+        "core" => "https://github.com/family-mruby/fmruby-core.git",
+        "asterism" => "https://github.com/ruby-asterism/asterism.git",
+        "branch" => "develop",         # core, for a version with no tag
+        "asterism_branch" => "main",
+        "search" => Lookup::SCOPE,     # what the LLM may search and read (globs in fmruby-core)
+        "exclude" => Lookup::EXCLUDE,  # left out of search (globs)
+        "rb_max_kb" => Lookup::RB_MAX / 1024, # a bigger .rb is left out of search
+        "refresh_hours" => 24,
+        "git_timeout_s" => 300
+      },
+      # The LLM's tools (search_source, read_source). rounds: the rounds of
+      # look-ups in one request (0: no tools); then it answers with what it has.
+      "lookup" => { "rounds" => 4, "hits" => 30, "lines" => 120 },
       # stop_grace_s: on SIGTERM, how long the requests being worked on are
       # waited for before they are failed (Jobs#shutdown)
       "jobs" => { "workers" => 2, "stop_grace_s" => 8 }
@@ -126,6 +149,11 @@ module Tutor
 
     def log_dir = File.expand_path(dig("store", "log_dir"))
     def state_dir = File.expand_path(dig("store", "state_dir"))
+
+    def sources_dir
+      d = dig("sources", "dir").to_s
+      d.empty? ? File.join(File.dirname(state_dir), "sources") : File.expand_path(d)
+    end
 
     def bundle_dir
       d = dig("bundle", "dir").to_s

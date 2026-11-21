@@ -31,7 +31,10 @@ class TestContainer < Minitest::Test
     "ASTERISM_TUTOR_STATE_DIR" => "/state/store",
     "ASTERISM_TUTOR_MAKE" => "false",
     "ASTERISM_TUTOR_FIX" => "0",
-    "ASTERISM_TUTOR_STOP_GRACE" => "3"
+    "ASTERISM_TUTOR_STOP_GRACE" => "3",
+    "ASTERISM_TUTOR_SOURCES" => "off",
+    "ASTERISM_TUTOR_SOURCES_DIR" => "/sources",
+    "ASTERISM_TUTOR_LOOKUP_ROUNDS" => "2"
   }.freeze
 
   def test_every_setting_from_the_environment
@@ -48,6 +51,9 @@ class TestContainer < Minitest::Test
     assert_equal "/state/store", c.state_dir
     assert_equal %w[ask hint], c.modes
     assert_in_delta 3.0, c.dig("jobs", "stop_grace_s")
+    assert_equal false, c.dig("sources", "enabled")
+    assert_equal "/sources", c.sources_dir
+    assert_equal 2, c.dig("lookup", "rounds")
     assert_equal "AI helper", c.dig("network", "name")        # not in the environment: the default
     assert_equal ENV_ALL.keys.sort, Tutor::Config::ENV_KEYS.keys.sort
   end
