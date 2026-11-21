@@ -21,8 +21,10 @@ the checkouts are.
    one process ------------------------------------TLS as tutor (its own .tar) ---- tls/zenohd:7448
      exposes tutor/tutor/helper                    (the console's network asterism_router)
      calls the LLM's API over https (ANTHROPIC_API_KEY in .env)
+     clones the Family mruby sources over https from github.com (at start, once a day)
    /state (its volume): log/    the records (JSONL, one file a day; never deleted, not backed up)
                         store/  the results not fetched yet, status.json
+   /sources (its volume "sources"): the clones and the bundles made from them (a cache, ~7 MB)
    /credentials (deploy/vps/credentials/, read-only): tutor.tar
 ```
 
@@ -35,12 +37,22 @@ the checkouts are.
   apart. It is not in the image, the records or the log.
 - The records are not in the console's daily backup (they stay in the
   tutor's volume only).
+- The knowledge: the tutor clones the public Family mruby sources
+  (fmruby-core and asterism, shallow and sparse, git in the image) into the
+  volume `sources` and makes each request's bundle from them, for the
+  device's firmware version (its release tag, or develop). The LLM may also
+  search and read them (read only, up to 4 rounds a request). When GitHub
+  cannot be reached it goes on with what it has, and with nothing fetched
+  yet with the bundle in the image. `ASTERISM_TUTOR_SOURCES=false` in `.env`
+  turns it off (README "The knowledge bundle and the look-ups").
 
 ## 2. What you need
 
 - The console 0.4.0 or later running (`docker compose ps` in its
   `deploy/vps`).
-- About 256 MB of free memory and 250 MB of disk for the image.
+- About 256 MB of free memory and 250 MB of disk for the image (and about
+  10 MB for the sources).
+- Outgoing https to github.com (the sources) and to the LLM's API.
 - git and Docker with compose v2.24 or later, as for the console.
 - An LLM key for the tutor (Anthropic), made for it alone.
 
@@ -144,10 +156,10 @@ and `:latest`; amd64), built by the repository's CI from the tag
 `v<version>`. It holds the gem with its knowledge bundle and rules.
 
 ```
-./update.sh 0.2.2         # checks out v0.2.2, pulls its image and starts it
+./update.sh 0.3.0         # checks out v0.3.0, pulls its image and starts it
 ```
 
-By hand, the same is `git checkout v0.2.2`, `TUTOR_VERSION=0.2.2` in
+By hand, the same is `git checkout v0.3.0`, `TUTOR_VERSION=0.3.0` in
 `.env`, then `docker compose pull && docker compose up -d`.
 
 ### Building the image yourself
@@ -158,7 +170,7 @@ docker compose up -d
 ```
 
 Give it a name of your own in `.env` first (`TUTOR_IMAGE=asterism-tutor-local`),
-so a later pull does not replace it. `./update.sh --build 0.2.2` does the
+so a later pull does not replace it. `./update.sh --build 0.3.0` does the
 same from the version's tag.
 
 ## 6. Check
@@ -166,9 +178,10 @@ same from the version's tag.
 ```
 docker compose ps                                   # tutor: running (healthy)
 docker compose exec tutor bundle exec exe/asterism-tutor status
-      # asterism-tutor 0.2.2 tutor/tutor/helper: up, joined to tls/zenohd:7448 (... 0 working, today 0 requests, $0.0000)
+      # asterism-tutor 0.3.0 tutor/tutor/helper: up, joined to tls/zenohd:7448 (... 0 working, today 0 requests, $0.0000,
+      #   sources develop@0123456789ab (fetched ..., checked ...))
 docker compose logs --tail 5 tutor
-      # asterism-tutor 0.2.2: tutor/tutor/helper on tls/zenohd:7448 (llm: anthropic)
+      # asterism-tutor 0.3.0: tutor/tutor/helper on tls/zenohd:7448 (llm: anthropic)
       # asterism-tutor: model claude-haiku-5-5, 50 requests a device a day, $1.0 a day in all
 ```
 
@@ -187,8 +200,8 @@ router comes back.
 ## 7. Updating and going back
 
 ```
-./update.sh 0.2.2                 # the new version
-./update.sh --when-idle 0.2.2     # restart only once no request is being worked on
+./update.sh 0.3.0                 # the new version
+./update.sh --when-idle 0.3.0     # restart only once no request is being worked on
 ./update.sh 0.2.2                 # back to the version before (its image is kept)
 ```
 
@@ -217,7 +230,12 @@ docker compose exec tutor sh -c 'grep "\"ev\":\"llm\"" /state/log/*.jsonl' | wc 
 ```
 
 `ev` is `start`, `hello`, `ask` (the request and the document sent), `llm`
-(the prompt, the answer, the usage and `cost_usd`), `check`, `result`,
+(the prompt, the answer, the usage and `cost_usd`; with `round` and
+`tool_calls` when the LLM looks something up), `tool` (what it searched or
+read and what came back), `knowledge` (the bundle a request used: the
+sources' ref and commits, or the image's and why), `sources` (each fetch:
+seconds and disk, or the error), `check`, `result` (with `used`: the
+request's rounds of look-ups, calls, tokens and cost),
 `failed`, `refused` (a device not registered, a limit, a mode turned off,
 the stop), `cancel`, `rebase`, `new_talk`, `stop`. The gem never deletes
 them; the console's backup does not take them. To keep a copy elsewhere:
@@ -261,11 +279,14 @@ about 48 MB. The healthcheck's command takes about 33 MB while it runs (a
 second or so every 30 s). The container's limit is `TUTOR_MEM_LIMIT`
 (256 MB); over it, the kernel stops the process and docker starts it again
 (a request being worked on then fails as "stopped" at the next start).
+The sources' search keeps the files in scope in memory once searched
+(about 2 MB of text, 4 MB more RSS measured); git runs only while it fetches.
 
 ## 11. Removing
 
 ```
 docker compose down                 # the container; the volume asterism-tutor_state (the records) stays
+                                    # (asterism-tutor_sources is a cache: removing it is safe)
 ```
 
 In the console: disable or remove the row `tutor` and untick `tutor` on the

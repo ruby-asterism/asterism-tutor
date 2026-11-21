@@ -41,8 +41,9 @@ LABEL org.opencontainers.image.title="asterism-tutor" \
       org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.version="${TUTOR_VERSION}"
 
+# git: the tutor clones the Family mruby sources (Tutor::Sources).
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y ca-certificates && \
+    apt-get install --no-install-recommends -y ca-certificates git && \
     rm -rf /var/lib/apt/lists/*
 
 # The records and the tickets go to the state volume (docker-compose.yml);
@@ -52,6 +53,7 @@ ENV BUNDLE_WITHOUT=development:test \
     BUNDLE_DEPLOYMENT=1 \
     ASTERISM_TUTOR_LOG_DIR=/state/log \
     ASTERISM_TUTOR_STATE_DIR=/state/store \
+    ASTERISM_TUTOR_SOURCES_DIR=/sources \
     ASTERISM_TUTOR_IMAGE_VERSION=${TUTOR_VERSION}
 
 WORKDIR /app
@@ -60,7 +62,7 @@ COPY --from=build /app /app
 
 # Runs as 1000, the owner of credentials/ on the server (docs/install.md).
 RUN groupadd --system --gid 1000 tutor && useradd --uid 1000 --gid 1000 --no-create-home tutor && \
-    mkdir -p /state && chown tutor:tutor /state
+    mkdir -p /state /sources && chown tutor:tutor /state /sources
 USER 1000:1000
 
 CMD ["bundle", "exec", "exe/asterism-tutor"]

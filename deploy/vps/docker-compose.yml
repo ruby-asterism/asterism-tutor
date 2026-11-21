@@ -16,6 +16,11 @@
 #                      store/  the results a device has not fetched yet (one file
 #                              per request) and status.json (the healthcheck's)
 #                      The day's requests and cost are read back from log/ at start.
+#   sources            the Family mruby sources the tutor clones from GitHub (fmruby-core
+#                      and asterism, shallow and sparse, about 7 MB for two versions) and
+#                      the knowledge bundles made from them. Only a cache: removing the
+#                      volume makes it fetch them again (and until then it answers with
+#                      the bundle in the image). It needs https to github.com.
 # and reads, from this directory:
 #   credentials/       read-only: the tutor's .tar from the console, named in .env
 #                      (ASTERISM_TUTOR_CREDENTIALS=/credentials/tutor.tar).
@@ -31,7 +36,7 @@ name: asterism-tutor
 
 services:
   tutor:
-    image: ${TUTOR_IMAGE:-ghcr.io/ruby-asterism/asterism-tutor}:${TUTOR_VERSION:-0.2.2}
+    image: ${TUTOR_IMAGE:-ghcr.io/ruby-asterism/asterism-tutor}:${TUTOR_VERSION:-0.3.0}
     init: true
     restart: unless-stopped
     # SIGTERM: no new requests, the ones being worked on get
@@ -44,6 +49,7 @@ services:
     environment:
       ASTERISM_TUTOR_LOG_DIR: /state/log
       ASTERISM_TUTOR_STATE_DIR: /state/store
+      ASTERISM_TUTOR_SOURCES_DIR: /sources
       ASTERISM_TUTOR_ROUTER: ${TUTOR_ROUTER:-tls/zenohd:7448}
       # The day of the daily limits and of the records' files is this time
       # zone's date (TUTOR_TZ in .env; a TZ line there is not used).
@@ -51,6 +57,7 @@ services:
       MALLOC_ARENA_MAX: "2"
     volumes:
       - state:/state
+      - sources:/sources
       - ./credentials:/credentials:ro
     networks:
       router: {}
@@ -76,6 +83,7 @@ services:
 
 volumes:
   state: {}
+  sources: {}
 
 networks:
   router:

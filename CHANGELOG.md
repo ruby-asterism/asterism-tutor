@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.3.0
+
+The knowledge comes from the Family mruby sources, and the LLM can look things up.
+
+- The gem clones fmruby-core and asterism from their public repositories (shallow, partial,
+  sparse: only the bundle's paths and the search scope; no `components/`, no submodules) and
+  makes each request's bundle from them (`Tutor::Sources`, `Tutor::BundleMaker`). The device's
+  firmware version picks fmruby-core's ref: the release tag of that name, else `develop`.
+  One snapshot per ref in `sources.dir`; a changed commit is cloned beside the old one and
+  swapped in, and a request keeps the snapshot it started with. Fetched at start, once a day
+  (`sources.refresh_hours`) and when a version is asked for the first time. When the fetch
+  fails, the snapshot on disk; with none, the bundle in the gem (kept, made again from
+  develop with the picture API). The same sources give the same bundle byte for byte.
+- The app guide (the skill `fmrb-app-new`) is not in a public repository: the gem keeps a copy
+  in `data/app_guide.md`, which `tools/make_bundle.rb` refreshes from a local checkout.
+- Two tools for the LLM, read only: `search_source` and `read_source`, over `sources.search`
+  (sig, flash/app, the mrblib of lib/gems, the device's guides, doc/reference) minus
+  `sources.exclude` (flash/app/test, the mahjong app) and `.rb` files over `sources.rb_max_kb`
+  (32). Paths are looked up in an index made without following links, so nothing outside can
+  be read; the search runs in Ruby. Up to `lookup.rounds` (4) rounds a request, then it
+  answers with what it has; no new look-up with less than a third of `llm.timeout_s` left
+  (the time limit is now for one answer with its look-ups). Their rules are
+  `data/tools_ja.md`. The fake LLM can call them (`[[search ...]]`, `[[read ...]]`,
+  `[[lookup_loop]]`).
+- The log: `knowledge` (the bundle a request used), `sources` (each fetch), `tool` (each look-up),
+  `llm` with `round` and `tool_calls`, `result` with `used` (rounds, calls, tokens, cost); every
+  round's cost counts in the daily limit. `asterism-tutor status` shows the snapshots and the
+  last errors.
+- Settings: `[sources]` and `[lookup]`; `ASTERISM_TUTOR_SOURCES`, `ASTERISM_TUTOR_SOURCES_DIR`,
+  `ASTERISM_TUTOR_LOOKUP_ROUNDS`. An LLM call that times out is the error `timeout`.
+- The image has git and a volume `sources` (`/sources`).
+
 ## 0.2.2
 
 - The Japanese messages a device shows call the gem "AI ホスト" (the stop and stopping messages; the device's own text says the same from Family mruby develop of 2026-11-20).

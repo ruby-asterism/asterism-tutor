@@ -332,7 +332,8 @@ module Tutor
         status = w.value
       end
       unless status.success?
-        last = err.lines.map(&:strip).reject(&:empty?).last || "exit #{status.exitstatus}"
+        lines = err.lines.map(&:strip).reject(&:empty?)
+        last = lines.find { _1.start_with?("fatal:", "error:") } || lines.last || "exit #{status.exitstatus}"
         raise FetchError, "git #{args.first}: #{safe(last)}"
       end
       out

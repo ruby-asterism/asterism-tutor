@@ -23,7 +23,8 @@ device (AI Helper app) --Asterism router--> asterism-tutor (this gem) --> the LL
   document (when the child chose to send it, and for hints and fixes), the error text of the
   last run, the last few exchanges of the same device (the request in short and the answer's
   explanation), and this gem's knowledge bundle (how to write a Family mruby app, the API's
-  types, a table of pitfalls, samples; nothing about the child). The device's name (its
+  types, a table of pitfalls, samples; nothing about the child). When the LLM looks something
+  up (below), the lines it found in the Family mruby sources go to it too. The device's name (its
   Asterism node ID) and file locations are not sent, except the document's name.
 - **The log**: every request, the document sent, the instructions to the LLM, the answer,
   the usage with an estimated cost and the checks' results are kept as JSONL in
@@ -36,6 +37,14 @@ device (AI Helper app) --Asterism router--> asterism-tutor (this gem) --> the LL
   and rules (words a child can read, refuse anything that is not about programming, say that
   it is an AI, say so when it does not know) are in `data/rules_ja.md`; they go into the
   bundle and to the LLM with every request.
+- **Where the knowledge comes from**: the gem clones the public Family mruby sources
+  (fmruby-core and asterism, from GitHub) and makes the bundle from them, for the device's
+  firmware version (its release tag, or `develop` for a version being developed). It fetches
+  them at start and once a day; when it cannot, it goes on with what it has, and with nothing
+  fetched yet, with the bundle in the gem. The LLM may also search and read those sources
+  (read only, only the paths in `sources.search`, up to 4 rounds a request). This needs `git`
+  and the network to GitHub; `sources.enabled = false` turns it off (the bundle in the gem,
+  no look-ups).
 - The AI does not operate the device. It returns an explanation and the comments or the code
   to put into the editor's document (the device puts them in, after asking and after keeping
   a backup).
@@ -111,6 +120,16 @@ the environment, the environment over the file, the file over the defaults. The 
 | `store.log_dir` | `~/.local/share/asterism-tutor/log` | Where the log goes |
 | `store.state_dir` | `~/.local/share/asterism-tutor/state` | The results not fetched yet (`tickets/`) and `status.json` |
 | `jobs.stop_grace_s` | 8 | On SIGTERM, how long the requests being worked on are waited for |
+| `sources.enabled` | true | Clone the Family mruby sources and make the bundle from them (false: the bundle in the gem, no look-ups) |
+| `sources.dir` | `sources` next to `store.state_dir` | Where the clones and the bundles made from them go (about 7 MB for two versions) |
+| `sources.core` / `sources.asterism` | the public GitHub repositories | Where to clone from (any git URL or path) |
+| `sources.branch` | `develop` | fmruby-core's ref for a firmware version with no release tag |
+| `sources.search` | `sig/**/*`, `flash/app/**/*`, `lib/gems/*/mrblib/**/*`, `flash/usr/share/doc/**/*`, `doc/reference/**/*` | What the LLM may search and read (globs in fmruby-core) |
+| `sources.exclude` | `flash/app/test/**/*`, `flash/app/game/mahjong/**/*` | Left out of that (and not checked out) |
+| `sources.rb_max_kb` | 32 | A `.rb` file bigger than this is left out of that too |
+| `sources.refresh_hours` | 24 | How often the sources are fetched again |
+| `lookup.rounds` | 4 | Rounds of look-ups in one request (0: no tools); then the LLM answers with what it has |
+| `lookup.hits` / `lookup.lines` | 30 / 120 | Lines a search returns / lines a read returns, at most |
 
 The environment (a container's `.env`; an empty value is the same as none):
 
@@ -126,6 +145,8 @@ The environment (a container's `.env`; an empty value is the same as none):
 | `ASTERISM_TUTOR_LOG_DIR` / `ASTERISM_TUTOR_STATE_DIR` | `store.log_dir` / `store.state_dir` |
 | `ASTERISM_TUTOR_MAKE` / `ASTERISM_TUTOR_FIX` | `modes.make` / `modes.fix` (true or false) |
 | `ASTERISM_TUTOR_STOP_GRACE` | `jobs.stop_grace_s` |
+| `ASTERISM_TUTOR_SOURCES` / `ASTERISM_TUTOR_SOURCES_DIR` | `sources.enabled` (true or false) / `sources.dir` |
+| `ASTERISM_TUTOR_LOOKUP_ROUNDS` | `lookup.rounds` |
 | `ANTHROPIC_API_KEY` | the LLM key (only here, never in a file of settings) |
 
 A day of the limits (and of the log's files) is the local date of the process (`TZ`; the
@@ -162,19 +183,52 @@ ruby test/sender.rb --router tcp/127.0.0.1:17520 --node fmruby-test01 ask "What 
 ruby test/sender.rb --credentials fmruby-aaaaaa.tar ask "What is a variable?"   # the same through an mTLS router, with a console's certificate
 ```
 
-## The knowledge bundle
+## The knowledge bundle and the look-ups
 
-`bundles/<firmware version>/` (only `3.1.0` for now). Made from a family-mruby checkout:
+Every request carries a bundle of one firmware version: the rules (`data/rules_ja.md`), how to
+write an app (`data/app_guide.md`, the skill `fmrb-app-new`), the API's types (the type lines of
+`sig/*.rbs` with one-line summaries), the editor's templates, the table of pitfalls
+(asterism's `docs/ruby_features.md`, the app VM's "ng" and "differs" rows), the checks'
+patterns (`checks.json`) and three samples. The same sources give the same bundle byte for
+byte (it is the cached part of every request). `lib/tutor/bundle_maker.rb` makes it.
+
+Where it comes from (`Tutor::Knowledge`):
+
+1. `bundle.dir` set: the parent's own bundles (`index.json`, `<fw>/`).
+2. Otherwise the sources (`Tutor::Sources`): fmruby-core at the device's version (the release
+   tag of that name, or `sources.branch` when there is none) and asterism's `main`, cloned
+   shallow, partial and sparse (only the bundle's paths and the search scope; no
+   `components/`, no submodules) into `sources.dir`, one snapshot per ref. A refresh clones a
+   changed commit beside the old one and swaps it in; a request keeps the snapshot it started
+   with. Fetched at start, every `sources.refresh_hours`, and when a device asks for a version
+   for the first time. The app guide is not in a public repository, so it is the gem's copy.
+3. Nothing fetched (no network, GitHub down, never fetched): the snapshot on disk, and
+   with none the bundle in the gem (`bundles/<fw>/`; when there is none for a device's
+   version, the nearest older one, and the log gets `bundle_fallback`).
+
+The log's `knowledge` record says which one a request used (the ref and the commits),
+`sources` records each fetch (seconds, disk, or the error), and `asterism-tutor status` shows
+the snapshots, when they were fetched and the last errors.
+
+With the sources there, the LLM gets two tools: `search_source` (a string or a Ruby regular
+expression, over the files in `sources.search`; "path:line: text", `lookup.hits` lines of 200
+characters at most) and `read_source` (a path the search showed and a range of lines,
+`lookup.lines` at most). They only read, inside that scope: a path is looked up in an index of
+the regular files there (made without following symbolic links), so `..`, an absolute path or
+a link cannot reach anything else, and nothing from the LLM goes to a command. Up to
+`lookup.rounds` rounds a request (and with less than a third of `llm.timeout_s` left, no more);
+then it answers with what it found. The rules for them (`data/tools_ja.md`): answer at once when
+the bundle is enough; use only what the types or the samples and guides use; do not show what
+was read to the child. Each round is in the log (`llm` with `round` and `tool_calls`, `tool`
+with what was searched or read and what came back) and its cost counts in the daily limit;
+`result` has the request's rounds, calls, tokens and cost (`used`).
+
+The bundle in the gem is made from a family-mruby checkout (it refreshes `data/app_guide.md`
+from the checkout's skill too):
 
 ```sh
 ruby tools/make_bundle.rb --root /path/to/family-mruby     # bundles/3.1.0/ and bundles/index.json
 ```
-
-In it: the rules (`data/rules_ja.md`), how to write an app, the API's types (the type lines
-of `sig/*.rbs` with one-line summaries), the editor's three templates, the table of pitfalls
-(asterism's `docs/ruby_features.md`, the app VM's "ng" and "differs" rows), the checks'
-patterns (`checks.json`) and three samples. When there is no bundle for a device's version,
-the nearest older one is used and the log gets `bundle_fallback`.
 
 The rules and the bundle's documents are in Japanese (the AI Helper's users are children
 who read Japanese).

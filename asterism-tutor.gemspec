@@ -6,7 +6,8 @@ Gem::Specification.new do |s|
   s.summary = "The parent's side of Family mruby's AI helper: answers a device over Asterism"
   s.description = "Runs on a parent's PC. A Family mruby device asks it (over Asterism) for an " \
                   "answer, a hint as comments or a whole app; it calls an LLM with a knowledge " \
-                  "bundle of the device's firmware version, checks the code with Prism and " \
+                  "bundle of the device's firmware version (made from the Family mruby sources " \
+                  "it clones, which the LLM may also search), checks the code with Prism and " \
                   "returns it. The LLM key, the knowledge, the checks, the limits and the log " \
                   "stay on the PC."
   s.authors = ["Katsuhiko Kageyama"]

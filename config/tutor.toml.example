@@ -46,7 +46,27 @@ doc_max = 65536
 piece = 8192
 
 [bundle]
-dir = ""                           # "" = the bundles in the gem
+dir = ""                           # "" = made from the sources (or the bundles in the gem); a dir = your own bundles
+
+# The Family mruby sources the gem clones (needs git and the network to GitHub)
+[sources]
+enabled = true                     # false: the bundles in the gem, no look-ups
+dir = ""                           # "" = "sources" next to store.state_dir
+core = "https://github.com/family-mruby/fmruby-core.git"
+asterism = "https://github.com/ruby-asterism/asterism.git"
+branch = "develop"                 # fmruby-core's ref for a firmware version with no release tag
+asterism_branch = "main"
+search = ["sig/**/*", "flash/app/**/*", "lib/gems/*/mrblib/**/*", "flash/usr/share/doc/**/*", "doc/reference/**/*"]
+exclude = ["flash/app/test/**/*", "flash/app/game/mahjong/**/*"]
+rb_max_kb = 32                     # a bigger .rb is left out of search
+refresh_hours = 24
+git_timeout_s = 300
+
+# The LLM's tools (search_source, read_source) over the sources
+[lookup]
+rounds = 4                         # rounds of look-ups in one request (0 = no tools)
+hits = 30                          # lines one search returns, at most
+lines = 120                        # lines one read returns, at most
 
 [jobs]
 workers = 2
