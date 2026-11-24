@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.1
+
+- `search_source` reads its pattern as a regular expression first and, when it is not a valid
+  one or finds nothing as one, as plain text. The LLM had to say `regexp: true` and did not
+  always, so `a|b|c` found nothing and a round of look-ups was lost. `regexp: false` still
+  means plain text only.
+- The Japanese README and the texts the LLM reads call the knowledge bundle "バンドル"
+  (they said "束"). The bundle in the gem is made again with them.
+
 ## 0.3.0
 
 The knowledge comes from the Family mruby sources, and the LLM can look things up.
