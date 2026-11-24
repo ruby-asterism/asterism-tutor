@@ -31,6 +31,15 @@ The knowledge comes from the Family mruby sources, and the LLM can look things u
 - Settings: `[sources]` and `[lookup]`; `ASTERISM_TUTOR_SOURCES`, `ASTERISM_TUTOR_SOURCES_DIR`,
   `ASTERISM_TUTOR_LOOKUP_ROUNDS`. An LLM call that times out is the error `timeout`.
 - The image has git and a volume `sources` (`/sources`).
+- The comment at the head of an app that says its name and its window's size (`#---fmrb` to
+  `#---`, which the device reads) is no longer left to the LLM alone. It left it out of new
+  apps at times, and dropped it as an unneeded comment when asked to fix one. The rules and
+  the make/fix prompts now say what it is and that it stays; the check reads it the way the
+  device does (the first 512 bytes, before the first line of code, closed). Fix: when the
+  document had one and the answer has none, the document's own is put back with no question
+  to the LLM. Make: the LLM is asked again, and after the last retry the old document's or
+  a default one (the class's name, 200x140) is put in. A fix to a document that never had
+  one is left alone.
 
 ## 0.2.2
 

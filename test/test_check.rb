@@ -250,4 +250,70 @@ class TestCheck < Minitest::Test
     assert_empty C.syntax("x = 1\n")
     refute_empty C.syntax("def f\n")
   end
+
+  # --- the "#---fmrb" comment at the head of an app ---
+
+  FENCE = <<~RB
+    #---fmrb
+    # app_screen_name = "Ball"
+    # default_window_width = 160
+    # default_window_height = 120
+    #---
+  RB
+  APP = <<~RB
+    class Ball < FmrbApp
+      def on_create
+        @x = 0
+      end
+    end
+  RB
+
+  def test_meta_fence_as_the_device_reads_it
+    assert_equal [:ok, FENCE], C.meta_fence(FENCE + APP)
+    assert_equal [:ok, FENCE], C.meta_fence("# a note\n\n" + FENCE + APP), "comments and blank lines may come first"
+    assert_equal [:none, nil], C.meta_fence(APP)
+    assert_equal [:none, nil], C.meta_fence(APP + FENCE), "below the first line of code it is not read"
+    assert_equal [:none, nil], C.meta_fence(""), "an empty document"
+    assert_equal [:broken, nil], C.meta_fence("#---fmrb\n# app_screen_name = \"A\"\n" + APP), "never closed"
+    assert_equal [:broken, nil], C.meta_fence("#---fmrb\n# a = 1\n\n#---\n" + APP), "a blank line inside"
+    late = "# #{'x' * 70}\n" * 6 + FENCE + APP
+    assert_equal [:broken, nil], C.meta_fence(late), "opened inside the 512 bytes, closed past them"
+    assert_equal [:none, nil], C.meta_fence("# #{'x' * 70}\n" * 8 + FENCE + APP), "wholly past the 512 bytes"
+    assert_equal :ok, C.meta_fence("#---fmrb  \n# 名前 = \"あ\"\n#---\n" + APP)[0], "blanks after the mark, UTF-8 inside"
+  end
+
+  def test_default_meta_names_the_app_class
+    m = C.default_meta(APP)
+    assert_equal [:ok, m], C.meta_fence(m + APP)
+    assert_includes m, %(# app_screen_name = "Ball")
+    assert_includes m, "# default_window_width = 200"
+    assert_includes C.default_meta("x = 1\n"), %(# app_screen_name = "MyApp")
+  end
+
+  def keep(mode, code, doc, last) = Tutor::Jobs.allocate.send(:keep_meta, mode, code, doc, last)
+
+  def test_keep_meta_fix_puts_the_documents_own_back
+    code, what, prob = keep("fix", APP, FENCE + APP, false)
+    assert_equal [FENCE + APP, "restored", nil], [code, what, prob]
+    assert_equal [FENCE + APP, "kept", nil], keep("fix", FENCE + APP, FENCE + APP, false)
+    changed = FENCE.sub("160", "240")
+    assert_equal [changed + APP, "kept", nil], keep("fix", changed + APP, FENCE + APP, false), "a changed value is the answer's"
+    assert_equal [APP, nil, nil], keep("fix", APP, APP, false), "a document without one is left alone"
+    code, what, prob = keep("fix", "#---fmrb\n" + APP, FENCE + APP, true)
+    assert_equal [nil, C::META_PROBLEM], [what, prob["message"]], "a broken one goes back to the LLM"
+    assert_equal "#---fmrb\n" + APP, code
+  end
+
+  def test_keep_meta_make_asks_again_then_fills_in
+    code, what, prob = keep("make", APP, nil, false)
+    assert_equal [APP, nil, C::META_PROBLEM], [code, what, prob["message"]]
+    code, what, prob = keep("make", APP, "", true)
+    assert_equal ["default", nil], [what, prob]
+    assert_equal :ok, C.meta_fence(code)[0]
+    assert code.end_with?(APP)
+    code, what, prob = keep("make", APP, FENCE + APP, false)
+    assert_equal [nil, C::META_PROBLEM], [what, prob["message"]], "with an old document too, the LLM is asked first"
+    assert_equal [FENCE + APP, "restored", nil], keep("make", APP, FENCE + APP, true)
+    assert_equal [FENCE + APP, "kept", nil], keep("make", FENCE + APP, nil, false)
+  end
 end

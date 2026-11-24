@@ -126,4 +126,38 @@ class TestLookupFlow < Minitest::Test
     assert_equal "gem", recs(id, "knowledge").first["origin"]["kind"]
     assert_empty recs(id, "tool")
   end
+
+  # --- the "#---fmrb" comment at the head of an app (never left to the LLM alone) ---
+
+  def test_make_without_the_meta_comment_is_asked_again
+    server
+    id, r = run_req("[[nometa_once]] 作って", mode: "make")
+    assert_equal "doc", r["kind"], r.inspect
+    assert_equal [0, 1], recs(id, "llm").map { _1["attempt"] }
+    assert_equal [false, true], recs(id, "check").map { _1["ok"] }
+    assert_includes recs(id, "check").first["problems"].first["message"], "#---fmrb"
+    assert_equal "kept", recs(id, "check").last["meta"]
+    assert recs(id, "result").first["doc"].start_with?("#---fmrb\n")
+  end
+
+  def test_make_that_never_writes_it_gets_a_default_one
+    server
+    id, r = run_req("[[nometa]] 作って", mode: "make")
+    assert_equal "doc", r["kind"], r.inspect
+    assert_equal [0, 1, 2], recs(id, "llm").map { _1["attempt"] }
+    assert_equal "default", recs(id, "check").last["meta"]
+    doc = recs(id, "result").first["doc"]
+    assert_equal :ok, Tutor::Check.meta_fence(doc)[0]
+    assert_includes doc, %(# app_screen_name = "ClickApp")
+  end
+
+  def test_fix_that_drops_it_gets_the_documents_own_back
+    server
+    mine = "#---fmrb\n# app_screen_name = \"わたしのアプリ\"\n# default_window_width = 300\n# default_window_height = 200\n#---\n"
+    id, r = run_req("[[nometa]] 直して", mode: "fix", doc: mine + Tutor::LLM::Fake::NOMETA_APP)
+    assert_equal "doc", r["kind"], r.inspect
+    assert_equal 1, recs(id, "llm").size, "no question to the LLM for it"
+    assert_equal "restored", recs(id, "check").last["meta"]
+    assert_equal mine + Tutor::LLM::Fake::NOMETA_APP, recs(id, "result").first["doc"]
+  end
 end

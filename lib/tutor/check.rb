@@ -176,6 +176,60 @@ module Tutor
         data_after_end(a) == data_after_end(b)
     end
 
+    # --- the app's attributes at the head of the document ---
+
+    META_OPEN = "#---fmrb".freeze
+    META_CLOSE = "#---".freeze
+    META_SCAN = 512
+    META_PROBLEM = "文書の先頭に、アプリの設定のコメント (`#---fmrb` の行から `#---` の行まで。中に " \
+                   "`# app_screen_name = \"...\"`・`# default_window_width = N`・`# default_window_height = N`) " \
+                   "が無いか、閉じていない。端末はこのコメントからアプリの名前と Window の大きさを読む。" \
+                   "雛形と同じ形で、ほかのコメントやコードより前の 1 行目から置く".freeze
+
+    # The "#---fmrb" comment at the head of an app's .rb (its name, its
+    # window's size), read the way the device reads it (fmruby-core
+    # components/fmrb_toml/fmrb_app_meta.c): within the first META_SCAN bytes,
+    # whole lines only, before the first line of code, every line inside a
+    # comment, closed by "#---". Returns [:ok, the lines from the opening one
+    # to the closing one], [:none, nil] or [:broken, nil] (opened, not closed
+    # where the device looks).
+    def meta_fence(src)
+      head = src.to_s.b.byteslice(0, META_SCAN).to_s
+      lines = head.lines
+      lines.pop unless lines.empty? || lines[-1].end_with?("\n")
+      mark = ->(t, m) { t.start_with?(m) && t[m.size..].strip.empty? }
+      start = nil
+      lines.each_with_index do |l, i|
+        t = l.chomp
+        if start.nil?
+          if mark.(t, META_OPEN)
+            start = i
+          elsif !t.empty? && t[0] != "#" && !t.strip.empty?
+            return [:none, nil]
+          end
+        elsif mark.(t, META_CLOSE)
+          return [:ok, lines[start..i].join.force_encoding(src.encoding).scrub("")]
+        elsif t.empty? || t[0] != "#"
+          return [:broken, nil]
+        end
+      end
+      [start ? :broken : :none, nil]
+    end
+
+    # The comment for a document that has none: a window named after the app's
+    # class, of the size the window template has.
+    def default_meta(src)
+      name = nil
+      walk(Prism.parse(src).value) do |n|
+        next unless name.nil? && n.is_a?(Prism::ClassNode) && n.superclass
+        sup = n.superclass
+        name = n.name.to_s if sup.respond_to?(:full_name) && sup.full_name.delete_prefix("::") == "FmrbApp"
+      end
+      name = (name || "MyApp").gsub(/[^A-Za-z0-9_]/, "")
+      "#{META_OPEN}\n# app_screen_name = \"#{name}\"\n# default_window_mode = \"window\"\n" \
+        "# default_window_width = 200\n# default_window_height = 140\n#{META_CLOSE}\n"
+    end
+
     # Does the document define a subclass of FmrbApp?
     def app_class?(src)
       r = Prism.parse(src)

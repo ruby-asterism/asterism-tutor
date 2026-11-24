@@ -163,8 +163,17 @@ module Tutor
         want.each_with_index.map { |(n, input), i| { "id" => "toolu_fake_#{rounds}_#{i}", "name" => n, "input" => input } }
       end
 
+      META = <<~RUBY.freeze
+        #---fmrb
+        # app_screen_name = "ClickApp"
+        # default_window_mode = "window"
+        # default_window_width = 160
+        # default_window_height = 100
+        #---
+      RUBY
+
       APP = <<~RUBY.freeze
-        # AI: A small app that counts clicks.
+        #{META}# AI: A small app that counts clicks.
         class ClickApp < FmrbApp
           def on_create
             @clicks = 0
@@ -194,6 +203,9 @@ module Tutor
       REGEXP_APP = APP.sub("if ev[:type] == :mouse_up", "if ev[:type].to_s =~ /mouse_up/")
       SYNTAX_APP = APP.sub("    100\n  end\nend\n", "    100\n  end\n")
       NOAPP = "puts \"hello\"\n"
+      # The app without the "#---fmrb" comment at its head ([[nometa]]: in
+      # every answer; [[nometa_once]]: in the first one).
+      NOMETA_APP = APP.delete_prefix(META)
 
       def answer(mode, child, req, attempt, turns, last)
         talk = "(会話の続き: #{turns} 往復)"
@@ -219,6 +231,8 @@ module Tutor
             elsif child.include?("[[regexp]]") && attempt.zero? then REGEXP_APP
             elsif child.include?("[[syntax]]") && attempt.zero? then SYNTAX_APP
             elsif child.include?("[[noapp]]") then NOAPP
+            elsif child.include?("[[nometa]]") then NOMETA_APP
+            elsif child.include?("[[nometa_once]]") && attempt.zero? then NOMETA_APP
             else APP
             end
           "<explain>#{talk} #{mode == 'fix' ? '直しました' : '作りました'} (#{attempt + 1} 回目)。</explain>\n<code>\n#{code}</code>"

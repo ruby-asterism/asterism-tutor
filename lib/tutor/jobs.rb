@@ -199,9 +199,10 @@ module Tutor
         return finish_cancel(t) if cancelled?(id)
         set(id, "checking")
         parsed = Prompt.parse(res["text"])
-        problems, outcome = evaluate(mode, parsed, doc, bundle)
+        problems, outcome = evaluate(mode, parsed, doc, bundle, last: attempt >= retries)
         @log.write(:check, device: t["device"], ticket: id, attempt: attempt, ok: problems.empty?, problems: problems,
-                           placed: outcome && outcome["placed"], left_out: outcome && outcome["left_out"])
+                           placed: outcome && outcome["placed"], left_out: outcome && outcome["left_out"],
+                           meta: outcome && outcome["meta"])
         if problems.empty?
           finish(t, parsed, outcome, bundle, used)
           return
@@ -217,8 +218,9 @@ module Tutor
       end
     end
 
-    # [problems, outcome]. Problems make the LLM answer again.
-    def evaluate(mode, parsed, doc, bundle)
+    # [problems, outcome]. Problems make the LLM answer again. last: this is
+    # the last answer the LLM is asked for (no retry is left).
+    def evaluate(mode, parsed, doc, bundle, last: false)
       case mode
       when "ask"
         return [[{ "line" => 0, "message" => "<explain> が無い" }], nil] if parsed["explain"].empty?
@@ -246,8 +248,36 @@ module Tutor
         if probs.empty? && need_app && !Check.app_class?(code)
           probs << { "line" => 0, "message" => "FmrbApp を継承したクラスが無い" }
         end
-        [probs, { "doc" => code }]
+        meta = nil
+        code, meta, prob = keep_meta(mode, code, doc, last) if probs.empty? && need_app
+        probs << prob if prob
+        [probs, { "doc" => code, "meta" => meta }]
       end
+    end
+
+    # The "#---fmrb" comment at the head of an app (its name and its window's
+    # size: the device reads them from there). The LLM leaves it out of a new
+    # app at times, and drops it as "a comment nobody needs" when asked to fix
+    # one, so it is not left to the LLM alone. Returns [code, what was done
+    # (nil, "kept", "restored", "default"), a problem or nil].
+    #
+    #   fix   the document had one and the answer has none: the document's own
+    #         is put back as it was (no question to the LLM). A document
+    #         without one is left as it is (its .app.toml may say it all).
+    #   make  none: the LLM is asked again (it knows the size its drawing
+    #         wants); on the last answer the old document's is used, else a
+    #         default one.
+    # One opened and not closed where the device looks is the LLM's to mend.
+    def keep_meta(mode, code, doc, last)
+      state, = Check.meta_fence(code)
+      return [code, "kept", nil] if state == :ok
+      old_state, old = doc && !doc.empty? ? Check.meta_fence(doc) : [:none, nil]
+      return [code, nil, nil] if mode == "fix" && old_state == :none && state == :none
+      problem = { "line" => 1, "message" => Check::META_PROBLEM }
+      return [code, nil, problem] if state == :broken
+      return ["#{old}#{code}", "restored", nil] if old_state == :ok && (mode == "fix" || last)
+      return [code, nil, problem] unless last
+      ["#{Check.default_meta(code)}#{code}", "default", nil]
     end
 
     def pieces(text)
