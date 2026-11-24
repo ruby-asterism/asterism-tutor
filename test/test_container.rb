@@ -235,7 +235,9 @@ class TestContainer < Minitest::Test
     again = nil
     capture_io { again = server(c) }
     assert_equal 0, again.limits.used("d1")
-    assert_operator again.limits.cost_today, :>=, cost
+    # The records keep each call's cost to 6 places (jobs.rb), so the sum read
+    # back may be below the one added up in memory by a few millionths.
+    assert_operator again.limits.cost_today + 1e-5, :>=, cost
     assert_nil again.limits.refuse("d1")                        # the one request a day is still there
     again.jobs.stop
   end
