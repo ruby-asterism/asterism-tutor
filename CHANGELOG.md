@@ -12,7 +12,7 @@ The knowledge comes from the Family mruby sources, and the LLM can look things u
   swapped in, and a request keeps the snapshot it started with. Fetched at start, once a day
   (`sources.refresh_hours`) and when a version is asked for the first time. When the fetch
   fails, the snapshot on disk; with none, the bundle in the gem (kept, made again from
-  develop with the picture API). The same sources give the same bundle byte for byte.
+  develop with the picture API and the types of Asterism for apps). The same sources give the same bundle byte for byte.
 - The app guide (the skill `fmrb-app-new`) is not in a public repository: the gem keeps a copy
   in `data/app_guide.md`, which `tools/make_bundle.rb` refreshes from a local checkout.
 - Two tools for the LLM, read only: `search_source` and `read_source`, over `sources.search`

@@ -394,6 +394,163 @@ class FmrbApp
   # Close a Linux command
   def self.linux_close: (Integer h) -> void
 end
+# fmrb_asterism.rbs
+module FmrbAsterism
+  # This machine's kind ("sim", "p4nano", ...)
+  def self.host: () -> String
+  # How this machine connects (resolved settings)
+  def self.settings: () -> FmrbAsterism::Settings
+  class Settings
+  # The router's locator ("tcp/host:7447")
+  def router: () -> String
+  # This machine's node ID
+  def node: () -> String
+  # The display name the owner gave ("" for none)
+  def name: () -> String
+  # Why the settings are unusable (nil when fine)
+  def error: () -> String?
+  end
+  class Link
+  # Make a link (update connects later)
+  def self.new: (FmrbApp owner, String app) -> FmrbAsterism::Link
+  # Call every on_update (answer, receive, connect)
+  def update: () -> bool
+  # Whether it is connected
+  def connected?: () -> bool
+  # Connected and not reconnecting
+  def up?: () -> bool
+  # The state now
+  def state: () -> (:waiting_wifi | :waiting_screen | :connecting | :connected | :reconnecting | :retrying | :still_there | :lost | :failed | :closed)
+  # Why it is not connected ("" while connected)
+  def reason: () -> String
+  # The connection: expose, call, publish, subscribe
+  def conn: () -> Asterism::Connection?
+  # This machine's node ID
+  def node: () -> String
+  # The app's name on the network
+  def app: () -> String
+  # The router's locator
+  def router: () -> String
+  # Milliseconds the last connect took
+  def took_ms: () -> Integer
+  # How many times it has connected
+  def connects: () -> Integer
+  # Give up the connection now (retried after retry_ms)
+  def lost: (String why) -> void
+  # Close for good (on_destroy)
+  def close: () -> void
+  # Tell the link the screen is ready
+  def screen_ready: () -> void
+  end
+end
+module Asterism
+  class Connection
+  # Expose an object to other machines
+  def expose: (String name, untyped obj, untyped methods) -> String
+  # A proxy for another machine's object
+  def []: (String path) -> Asterism::Proxy
+  # The exposed objects alive now matching a pattern
+  def each: (String pattern) -> Array[Asterism::Proxy]
+  # The node IDs alive now (this one first)
+  def nodes: () -> Array[String]
+  # The apps alive now ("node/app") matching a pattern
+  def apps: (String pattern) -> Array[String]
+  # This app's path, "node/app"
+  def path: () -> String
+  # Declare a topic to put values on
+  def publish: (String name) -> Asterism::Topic
+  # Receive the values of topics (in a block)
+  def subscribe: (String path) -> Asterism::Subscription
+  # Set this app's status (a small Hash others can read)
+  def status: (Hash status) -> Hash
+  # Another app's status (nil when it does not answer)
+  def status_of: (String node, String app) -> Hash?
+  # Run a block when another machine joins
+  def on_join: () -> Asterism::Connection
+  # Run a block when another machine leaves
+  def on_leave: () -> Asterism::Connection
+  # The call being answered now: who called (nil outside)
+  def current_call: () -> Asterism::CurrentCall?
+  end
+  class Proxy
+  # The same object, with calls that do not wait
+  def async: () -> Asterism::AsyncProxy
+  # Call a remote method by its name
+  def asterism_call: (String name) -> untyped
+  # The path, "node/app/object"
+  def asterism_path: () -> String
+  # The exposed methods (asks the other machine once)
+  def remote_methods: () -> Array[Symbol]
+  end
+  class AsyncProxy
+  # Call a remote method by name, a Future at once
+  def asterism_call: (String name) -> Asterism::Future
+  end
+  class Future
+  # Whether the answer came, or the time ran out (never waits)
+  def done?: () -> bool
+  # The answer (raises what the call failed with)
+  def value: () -> untyped
+  # Milliseconds from the call to its answer (nil until done)
+  def took_ms: () -> Integer?
+  end
+  class Topic
+  # Send a value to the subscribers
+  def put: (untyped value) -> void
+  # The topic's name
+  def name: () -> String
+  # Withdraw the topic
+  def close: () -> bool
+  end
+  class Subscription
+  # Stop receiving
+  def close: () -> bool
+  # Whether it is closed
+  def closed?: () -> bool
+  # How many values came so far
+  def received: () -> Integer
+  end
+  class SampleInfo
+  # The sender, "node/app"
+  def from: () -> String?
+  # The sender's node ID
+  def node: () -> String?
+  # The sender's app name
+  def app: () -> String?
+  # The topic's name
+  def name: () -> String
+  # How many values were missed before this one
+  def lost: () -> Integer
+  # The sender's sequence number
+  def seq: () -> Integer?
+  end
+  class CurrentCall
+  # The calling machine's node ID
+  def from: () -> String
+  # The exposed object's name
+  def object: () -> String
+  # The method's name
+  def method: () -> String
+  end
+  class Error
+  # What went wrong
+  def message: () -> String
+  end
+  class RemoteError < Asterism::Error
+  # The class name of the error over there
+  def remote_class: () -> String
+  # The error's message over there
+  def remote_message: () -> String
+  # What happened ("raised", "not_exposed", "arguments", ...)
+  def remote_kind: () -> String?
+  end
+  class TimeoutError < Asterism::Error
+  end
+  class Disconnected < Asterism::Error
+  end
+  class EncodeError < Asterism::Error
+  end
+end
 # fmrb_audio.rbs
 class FmrbAudio
   type nsf_status = { state: uint8, reason: uint8, track: uint8, laps: uint8, gen: uint16, period: uint16, frames: uint32 }
