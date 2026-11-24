@@ -236,4 +236,31 @@ class TestSources < Minitest::Test
     assert l2.call("rm_rf", {})["error"]
     assert_includes l2.search("FMRBASTERISM", ignore_case: true)["text"], "matches"
   end
+
+  # The pattern is a regular expression unless it cannot be one, or finds
+  # nothing as one: the LLM does not have to say which (it forgot to).
+  def test_search_reads_the_pattern_as_an_expression_then_as_text
+    l = lookup
+    File.write(File.join(l.root, "flash/app/modern/pat.app.rb"), <<~RB)
+      conn.publish("posts")
+      conn.subscribe("posts")
+      arr[0] = draw_text(1)
+    RB
+    l2 = Tutor::Lookup.new(l.root, Tutor::Lookup::SCOPE)
+    in_file = { path: "flash/app/modern/pat.app.rb" }
+    r = l2.search("publish|subscribe", **in_file)
+    assert_equal [2, true], [r["info"]["matches"], r["info"]["regexp"]]
+    assert l2.search("publish|subscribe", regexp: false, **in_file)["text"].start_with?("no match")
+    r = l2.search("draw_text(", **in_file)
+    assert_equal [1, false], [r["info"]["matches"], r["info"]["regexp"]], "not a valid expression: as text"
+    assert l2.search("draw_text(", regexp: true, **in_file)["error"]
+    r = l2.search("arr[0]", **in_file)
+    assert_equal [1, false], [r["info"]["matches"], r["info"]["regexp"]], "nothing as an expression: as text"
+    assert l2.search("arr[0]", regexp: true, **in_file)["text"].start_with?("no match")
+    assert l2.search("no_such_thing|nor_this", **in_file)["text"].start_with?("no match")
+    # what the LLM sends: no "regexp" at all, or false
+    assert_equal 2, l2.call("search_source", { "pattern" => "\\.publish\\(|\\.subscribe\\(", "path" => in_file[:path] })["info"]["matches"]
+    assert_equal 0, l2.call("search_source", { "pattern" => "publish|subscribe", "regexp" => false,
+                                               "path" => in_file[:path] })["info"]["matches"]
+  end
 end

@@ -42,8 +42,10 @@ module Tutor
           input_schema: {
             type: "object",
             properties: {
-              pattern: { type: "string", description: "The text to look for (or a Ruby regular expression when regexp is true)" },
-              regexp: { type: "boolean", description: "Treat pattern as a regular expression (default false)" },
+              pattern: { type: "string", description: "What to look for: a Ruby regular expression (a|b finds either), " \
+                                                      "or plain text. Text that is not a valid expression, or that " \
+                                                      "finds nothing as one, is looked for as it is written" },
+              regexp: { type: "boolean", description: "false: look for pattern exactly as written, never as a regular expression" },
               ignore_case: { type: "boolean", description: "Ignore case (default false)" },
               path: { type: "string", description: "Only files whose path starts with this (e.g. \"sig/\" or \"flash/app/\")" }
             },
@@ -99,25 +101,57 @@ module Tutor
     def call(name, input)
       input = input.is_a?(Hash) ? input.transform_keys(&:to_s) : {}
       case name
-      when SEARCH then search(input["pattern"], regexp: input["regexp"] == true, ignore_case: input["ignore_case"] == true,
-                                                path: input["path"])
+      when SEARCH then search(input["pattern"], regexp: input["regexp"] == false ? false : nil,
+                                                ignore_case: input["ignore_case"] == true, path: input["path"])
       when READ then read(input["path"], input["from"], input["to"])
       else fail_with("unknown tool #{name}")
       end
     end
 
-    def search(pattern, regexp: false, ignore_case: false, path: nil)
+    # regexp: nil (the default) reads the pattern as a regular expression and,
+    # when it is not a valid one or finds nothing, as plain text; false reads
+    # it as plain text only; true as an expression only (a bad one is an error).
+    #
+    # The LLM used to have to say regexp: true and did not always: "a|b|c"
+    # then found nothing as text, and a round of the few a request has was
+    # gone. Names with marks in them ("draw_text(", "conn[") are not valid
+    # expressions, or find nothing as one ("arr[0]"), and are found as text.
+    def search(pattern, regexp: nil, ignore_case: false, path: nil)
       pattern = pattern.to_s
       return fail_with("pattern is empty") if pattern.strip.empty?
       return fail_with("pattern is longer than #{PATTERN_MAX} characters") if pattern.length > PATTERN_MAX
       prefix = path.to_s
-      re =
+      flags = ignore_case ? Regexp::IGNORECASE : 0
+      plain = Regexp.new(Regexp.escape(pattern), flags, timeout: REGEXP_TIMEOUT)
+      re = nil
+      unless regexp == false
         begin
-          src = regexp ? pattern : Regexp.escape(pattern)
-          Regexp.new(src, ignore_case ? Regexp::IGNORECASE : 0, timeout: REGEXP_TIMEOUT)
+          re = Regexp.new(pattern, flags, timeout: REGEXP_TIMEOUT)
         rescue RegexpError => e
-          return fail_with("bad regular expression: #{e.message}")
+          return fail_with("bad regular expression: #{e.message}") if regexp == true
         end
+      end
+      as = re ? "regexp" : "text"
+      r = scan(re || plain, prefix)
+      if regexp.nil? && re && r[:total].zero? && !r[:cut]
+        as = "text"
+        r = scan(plain, prefix)
+      end
+      total = r[:total]
+      found = r[:found]
+      head =
+        if total.zero? then "no match"
+        elsif total > found.size then "#{total} matches, the first #{found.size}:"
+        else "#{total} matches:"
+        end
+      head += " (the search stopped after #{SEARCH_TIME} s)" if r[:cut]
+      { "text" => ([head] + found).join("\n"), "error" => false,
+        "info" => { "pattern" => pattern, "regexp" => as == "regexp", "path" => prefix, "matches" => total,
+                    "shown" => found.size, "cut" => r[:cut] } }
+    end
+
+    # The lines of the files under prefix that match re.
+    def scan(re, prefix)
       found = []
       total = 0
       cut = false
@@ -134,15 +168,7 @@ module Tutor
           found << "#{rel}:#{i + 1}: #{short(l)}" if found.size < @hits_max
         end
       end
-      head =
-        if total.zero? then "no match"
-        elsif total > found.size then "#{total} matches, the first #{found.size}:"
-        else "#{total} matches:"
-        end
-      head += " (the search stopped after #{SEARCH_TIME} s)" if cut
-      { "text" => ([head] + found).join("\n"), "error" => false,
-        "info" => { "pattern" => pattern, "regexp" => regexp, "path" => prefix, "matches" => total, "shown" => found.size,
-                    "cut" => cut } }
+      { total: total, found: found, cut: cut }
     end
 
     def read(path, from, to)
