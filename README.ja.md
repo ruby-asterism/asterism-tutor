@@ -10,7 +10,7 @@ Asterism で頼みを受け、LLM を呼び、コードを検査して返す CRu
 
 ```
 端末 (AI 連携アプリ) --Asterism のルータ--> asterism-tutor (この gem) --> LLM の API
-                                              鍵・知識の束・検査・記録・上限
+                                              鍵・知識のバンドル・検査・記録・上限
 ```
 
 ## 大事なこと (親が知っておくこと)
@@ -19,7 +19,7 @@ Asterism で頼みを受け、LLM を呼び、コードを検査して返す CRu
   鍵は、この gem を起こすプロセスの環境変数 `ANTHROPIC_API_KEY` にだけ置く (設定のファイル・記録には入らない)。
 - **LLM の提供元に送るもの**: 子どもが打った文、エディタの今の文書 (送ると選んだとき・ヒント・修正)、
   直前の実行のエラーの文、同じ端末の直前の数回のやり取り (頼みの短い形と答えの説明)、それと
-  この gem の知識の束 (Family mruby のアプリの書き方・API の型・罠の表・見本。子どもの情報は入っていない)。
+  この gem の知識のバンドル (Family mruby のアプリの書き方・API の型・罠の表・見本。子どもの情報は入っていない)。
   LLM が調べ物をしたときは (下)、Family mruby のソースから見つけた行も送る。
   端末の名前 (Asterism のノード ID) やファイルの置き場所は、文書の名前を除いて送らない。
 - **記録**: 頼み・送った文書・LLM への指示・答え・使った量 (usage) と見積もりの費用・検査の結果を、
@@ -27,12 +27,12 @@ Asterism で頼みを受け、LLM を呼び、コードを検査して返す CRu
   親はこれを読める (1 行 1 件の JSON。`ev` が `ask`・`llm`・`check`・`result`・`refused` など)。
 - **できることを親が決める**: 受け付ける端末 (`devices`)、1 日の回数と費用の上限、「作成」「修正してもらう」を止める。
   AI の役目と決まり (子ども向けの言葉づかい、プログラムの話以外は断る、AI であると言う、分からないことは
-  分からないと言う) は `data/rules_ja.md` にあり、束に入って毎回 LLM に渡る。
+  分からないと言う) は `data/rules_ja.md` にあり、バンドルに入って毎回 LLM に渡る。
 - **知識の元**: gem は公開の Family mruby のソース (GitHub の fmruby-core と asterism) を clone して持ち、
-  端末のファームの版 (リリースのタグ、開発中の版なら `develop`) の束をそこから作る。取るのは起動のときと
-  1 日 1 回。取れないときは手元のものを使い続け、まだ何も取れていなければ gem に同梱の束を使う。
+  端末のファームの版 (リリースのタグ、開発中の版なら `develop`) のバンドルをそこから作る。取るのは起動のときと
+  1 日 1 回。取れないときは手元のものを使い続け、まだ何も取れていなければ gem に同梱のバンドルを使う。
   LLM はそのソースを検索して読むこともできる (読むだけ・`sources.search` の範囲だけ・1 回の頼みで 4 往復まで)。
-  `git` と GitHub への通信が要る。`sources.enabled = false` で止まる (同梱の束だけ、調べ物なし)。
+  `git` と GitHub への通信が要る。`sources.enabled = false` で止まる (同梱のバンドルだけ、調べ物なし)。
 - AI は端末を操作しない。返すのは説明の文と、エディタの文書に入れるコメントかコードだけ
   (入れるのは端末の側。入れる前の確認・退避も端末の側)。
 - 18 歳未満の利用について、LLM の提供元は組織に追加の指針を求めている (fmruby-core の
@@ -98,8 +98,8 @@ bundle exec exe/asterism-tutor --config tutor.toml --llm anthropic --model claud
 | `store.log_dir` | `~/.local/share/asterism-tutor/log` | 記録の置き場 |
 | `store.state_dir` | `~/.local/share/asterism-tutor/state` | 取りに来ていない結果 (`tickets/`) と `status.json` |
 | `jobs.stop_grace_s` | 8 | SIGTERM のとき、進行中の頼みを待つ秒数 |
-| `sources.enabled` | true | Family mruby のソースを clone して束をそこから作る (false: 同梱の束、調べ物なし) |
-| `sources.dir` | `store.state_dir` の隣の `sources` | clone と、そこから作った束の置き場 (2 つの版で約 7 MB) |
+| `sources.enabled` | true | Family mruby のソースを clone してバンドルをそこから作る (false: 同梱のバンドル、調べ物なし) |
+| `sources.dir` | `store.state_dir` の隣の `sources` | clone と、そこから作ったバンドルの置き場 (2 つの版で約 7 MB) |
 | `sources.core` / `sources.asterism` | GitHub の公開のリポジトリ | clone の元 (git の URL かパス) |
 | `sources.branch` | `develop` | リリースのタグが無い版のときの fmruby-core の ref |
 | `sources.search` | `sig/**/*`・`flash/app/**/*`・`lib/gems/*/mrblib/**/*`・`flash/usr/share/doc/**/*`・`doc/reference/**/*` | LLM が検索して読める範囲 (fmruby-core の中の glob) |
@@ -144,23 +144,23 @@ ruby test/sender.rb --router tcp/127.0.0.1:17520 --node fmruby-test01 ask "変�
 ruby test/sender.rb --credentials fmruby-aaaaaa.tar ask "変数って何?"   # console の証明書で mTLS のルータ越しに
 ```
 
-## 知識の束と調べ物
+## 知識のバンドルと調べ物
 
-頼みには毎回、ファームの 1 つの版の束を付ける: 決まり (`data/rules_ja.md`)、アプリの書き方 (`data/app_guide.md`、skill
+頼みには毎回、ファームの 1 つの版のバンドルを付ける: 決まり (`data/rules_ja.md`)、アプリの書き方 (`data/app_guide.md`、skill
 `fmrb-app-new`)、API の型 (`sig/*.rbs` の型の行と 1 行の英語の要約)、エディタの雛形、罠の表 (asterism の
 `docs/ruby_features.md` の app VM の ng・differs)、検査の型 (`checks.json`)、見本 3 つ。同じソースからは 1 バイトも
-違わない束ができる (毎回の頼みのキャッシュされる部分)。作るのは `lib/tutor/bundle_maker.rb`。
+違わないバンドルができる (毎回の頼みのキャッシュされる部分)。作るのは `lib/tutor/bundle_maker.rb`。
 
 どこから取るか (`Tutor::Knowledge`):
 
-1. `bundle.dir` があれば、親が用意した束 (`index.json`・`<fw>/`)。
+1. `bundle.dir` があれば、親が用意したバンドル (`index.json`・`<fw>/`)。
 2. 無ければソース (`Tutor::Sources`): 端末の版の fmruby-core (同じ名前のリリースのタグ、無ければ `sources.branch`) と
-   asterism の `main` を、浅く・部分的に・必要なパスだけ (束の分と検索の範囲。`components/` と submodule は取らない)
+   asterism の `main` を、浅く・部分的に・必要なパスだけ (バンドルの分と検索の範囲。`components/` と submodule は取らない)
    `sources.dir` に clone する。ref ごとに 1 つの写し。更新はコミットが変わったときだけ隣に clone して差し替え、
    進行中の頼みは始めたときの写しを使い続ける。取るのは起動のとき・`sources.refresh_hours` ごと・ある版を初めて
    聞かれたとき。アプリの書き方は公開のリポジトリに無いので、gem の写しを使う。
-3. 取れない (ネットが無い・GitHub が落ちている・まだ取っていない): 手元の写し、それも無ければ gem に同梱の束
-   (`bundles/<fw>/`。端末の版の束が無ければ近い古い版を使い、記録に `bundle_fallback` を残す)。
+3. 取れない (ネットが無い・GitHub が落ちている・まだ取っていない): 手元の写し、それも無ければ gem に同梱のバンドル
+   (`bundles/<fw>/`。端末の版のバンドルが無ければ近い古い版を使い、記録に `bundle_fallback` を残す)。
 
 記録の `knowledge` に頼みごとの元 (ref とコミット)、`sources` に取りに行った結果 (秒・ディスク、または失敗の理由) が
 残る。`asterism-tutor status` も写しと取った時刻、最後の失敗を出す。
@@ -170,11 +170,11 @@ ruby test/sender.rb --credentials fmruby-aaaaaa.tar ask "変数って何?"   # c
 読むだけで、範囲の外には出られない: パスは範囲の中の普通のファイルの一覧 (シンボリックリンクをたどらずに作る) で
 引くので、`..`・絶対パス・リンクでほかのファイルに届かない。LLM の文字列を外部のコマンドに渡さない。1 回の頼みで
 `lookup.rounds` 往復まで (`llm.timeout_s` の残りが 3 分の 1 を切ったら、それ以上は調べない)。使い方の決まりは
-`data/tools_ja.md` (束で足りればすぐ答える、型か見本・案内が使っているものだけを使う、調べた中身を子どもに見せない)。
+`data/tools_ja.md` (バンドルで足りればすぐ答える、型か見本・案内が使っているものだけを使う、調べた中身を子どもに見せない)。
 往復ごとに記録に残り (`llm` の `round`・`tool_calls`、`tool` に何を検索したか・どこを読んだか・何を返したか)、
 費用は 1 日の上限に数える。`result` の `used` に、その頼みの往復・呼び出しの数・トークン・費用。
 
-gem に同梱の束は family-mruby の checkout から作る (checkout の skill から `data/app_guide.md` も作り直す):
+gem に同梱のバンドルは family-mruby の checkout から作る (checkout の skill から `data/app_guide.md` も作り直す):
 
 ```sh
 ruby tools/make_bundle.rb --root /path/to/family-mruby     # bundles/3.1.0/ と bundles/index.json

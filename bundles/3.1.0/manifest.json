@@ -1,11 +1,11 @@
 {
   "fw": "3.1.0",
   "made_from": {
-    "core": "376f5ee8a094e16e8238e97610d0b4b4037954e6",
+    "core": "18918bea6fd5360c8cc2a027cd58b7ea9692b73e",
     "root": "63f133d9d0bac49bc3217661af5c2f04e194beb6",
     "asterism": "da1c382e423ebda735c7c758825fc824addc6d96"
   },
-  "made_at": "2026-11-24T06:32:29Z",
+  "made_at": "2026-11-24T09:11:45Z",
   "files": [
     {
       "path": "api.rbs",
@@ -14,8 +14,8 @@
     },
     {
       "path": "app_guide.md",
-      "bytes": 19017,
-      "tokens_est": 5710
+      "bytes": 19023,
+      "tokens_est": 5712
     },
     {
       "path": "checks.json",
@@ -29,8 +29,8 @@
     },
     {
       "path": "rules_ja.md",
-      "bytes": 4925,
-      "tokens_est": 1574
+      "bytes": 4943,
+      "tokens_est": 1580
     },
     {
       "path": "samples/piano.app.rb",
@@ -63,8 +63,8 @@
       "tokens_est": 363
     }
   ],
-  "bytes": 119531,
-  "tokens_est": 31182,
+  "bytes": 119555,
+  "tokens_est": 31190,
   "checks": 50,
   "pitfalls": 70
 }
