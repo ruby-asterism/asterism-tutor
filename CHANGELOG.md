@@ -17,8 +17,8 @@ The knowledge comes from the Family mruby sources, and the LLM can look things u
   in `data/app_guide.md`, which `tools/make_bundle.rb` refreshes from a local checkout.
 - Two tools for the LLM, read only: `search_source` and `read_source`, over `sources.search`
   (sig, flash/app, the mrblib of lib/gems, the device's guides, doc/reference) minus
-  `sources.exclude` (flash/app/test, the mahjong app) and `.rb` files over `sources.rb_max_kb`
-  (32). Paths are looked up in an index made without following links, so nothing outside can
+  `sources.exclude` (flash/app/test, the mahjong app) and the apps (`.rb` files in
+  `flash/app/`) over `sources.rb_max_kb` (32); the libraries are searched whatever their size. Paths are looked up in an index made without following links, so nothing outside can
   be read; the search runs in Ruby. Up to `lookup.rounds` (4) rounds a request, then it
   answers with what it has; no new look-up with less than a third of `llm.timeout_s` left
   (the time limit is now for one answer with its look-ups). Their rules are

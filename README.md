@@ -126,7 +126,7 @@ the environment, the environment over the file, the file over the defaults. The 
 | `sources.branch` | `develop` | fmruby-core's ref for a firmware version with no release tag |
 | `sources.search` | `sig/**/*`, `flash/app/**/*`, `lib/gems/*/mrblib/**/*`, `flash/usr/share/doc/**/*`, `doc/reference/**/*` | What the LLM may search and read (globs in fmruby-core) |
 | `sources.exclude` | `flash/app/test/**/*`, `flash/app/game/mahjong/**/*` | Left out of that (and not checked out) |
-| `sources.rb_max_kb` | 32 | A `.rb` file bigger than this is left out of that too |
+| `sources.rb_max_kb` | 32 | A `.rb` file in `flash/app/` bigger than this is left out of that too (the libraries are searched whatever their size) |
 | `sources.refresh_hours` | 24 | How often the sources are fetched again |
 | `lookup.rounds` | 4 | Rounds of look-ups in one request (0: no tools); then the LLM answers with what it has |
 | `lookup.hits` / `lookup.lines` | 30 / 120 | Lines a search returns / lines a read returns, at most |

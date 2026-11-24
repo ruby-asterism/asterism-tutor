@@ -82,7 +82,7 @@ module Tutor
         "asterism_branch" => "main",
         "search" => Lookup::SCOPE,     # what the LLM may search and read (globs in fmruby-core)
         "exclude" => Lookup::EXCLUDE,  # left out of search (globs)
-        "rb_max_kb" => Lookup::RB_MAX / 1024, # a bigger .rb is left out of search
+        "rb_max_kb" => Lookup::RB_MAX / 1024, # a bigger .rb in flash/app/ is left out of search
         "refresh_hours" => 24,
         "git_timeout_s" => 300
       },

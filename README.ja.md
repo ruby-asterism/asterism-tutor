@@ -104,7 +104,7 @@ bundle exec exe/asterism-tutor --config tutor.toml --llm anthropic --model claud
 | `sources.branch` | `develop` | リリースのタグが無い版のときの fmruby-core の ref |
 | `sources.search` | `sig/**/*`・`flash/app/**/*`・`lib/gems/*/mrblib/**/*`・`flash/usr/share/doc/**/*`・`doc/reference/**/*` | LLM が検索して読める範囲 (fmruby-core の中の glob) |
 | `sources.exclude` | `flash/app/test/**/*`・`flash/app/game/mahjong/**/*` | 範囲から外すもの (clone もしない) |
-| `sources.rb_max_kb` | 32 | これより大きい `.rb` も範囲から外す |
+| `sources.rb_max_kb` | 32 | `flash/app/` の中の `.rb` で、これより大きいものも範囲から外す (ライブラリは大きくても検索できる) |
 | `sources.refresh_hours` | 24 | 取り直す間隔 |
 | `lookup.rounds` | 4 | 1 回の頼みで調べられる往復の数 (0: 道具なし)。使い切ったら、そこまでの材料で答える |
 | `lookup.hits` / `lookup.lines` | 30 / 120 | 1 回の検索で返す行の数 / 1 回に読める行の数の上限 |

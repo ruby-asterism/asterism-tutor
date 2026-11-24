@@ -20,8 +20,12 @@ module Tutor
     # Left out of the scope: the regression tools' apps (odd code on purpose)
     # and the big apps (too much for a light model to read).
     EXCLUDE = ["flash/app/test/**/*", "flash/app/game/mahjong/**/*"].freeze
-    # A .rb bigger than this is left out too (a big app, not a sample to copy).
+    # An app (.rb under RB_MAX_UNDER) bigger than this is left out too: a big
+    # app is not a sample to copy, and too much for a light model to read. The
+    # libraries (lib/gems/*/mrblib) are searched whatever their size: the
+    # Ruby side of FmrbApp and FmrbUI is there.
     RB_MAX = 32 * 1024
+    RB_MAX_UNDER = "flash/app/".freeze
     FILE_MAX = 512 * 1024        # bigger files are left out of the index
     PATTERN_MAX = 200
     REGEXP_TIMEOUT = 0.5         # seconds for one line (Regexp timeout)
@@ -180,7 +184,7 @@ module Tutor
         next unless in_scope?(rel)
         st = File.lstat(abs)
         next unless st.file? && st.size <= FILE_MAX
-        next if rel.end_with?(".rb") && st.size > @rb_max
+        next if rel.start_with?(RB_MAX_UNDER) && rel.end_with?(".rb") && st.size > @rb_max
         head = File.binread(abs, 8192) || ""
         next if head.include?("\x00")
         out[rel] = abs

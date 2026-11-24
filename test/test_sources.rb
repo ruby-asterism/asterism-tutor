@@ -192,7 +192,10 @@ class TestSources < Minitest::Test
     assert_includes r["text"], "flash/app/modern/chat.app.rb:2:"
     refute_includes r["text"], "flash/app/test/"
     refute_includes r["text"], "mahjong"
-    refute_includes r["text"], "huge.app.rb"
+    refute_includes r["text"], "huge.app.rb" # an app over rb_max_kb
+    # The limit is for the apps only: a library over it is searched.
+    assert_operator File.size(File.join(l.root, "lib/gems/picoruby-fmrb-app/mrblib/fmrb-app.rb")), :>, Tutor::Lookup::RB_MAX
+    assert_includes r["text"], "lib/gems/picoruby-fmrb-app/mrblib/fmrb-app.rb:2:"
     refute_includes r["text"], ".c:"
     refute_includes r["text"], "doc/plan.md"
   end

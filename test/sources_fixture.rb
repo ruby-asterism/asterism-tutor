@@ -69,6 +69,8 @@ module SourcesFixture
             "flash/app/game/mahjong/table.app.rb" => "# FmrbAsterism mahjong\n",
             "flash/app/game/huge.app.rb" => "# FmrbAsterism huge\n" + ("x = 1\n" * 7000),
             "lib/gems/picoruby-fmrb-asterism/mrblib/asterism.rb" => "class FmrbAsterism\n  def _raw_put\n  end\nend\n",
+            "lib/gems/picoruby-fmrb-app/mrblib/fmrb-app.rb" => "class FmrbApp\n  # FmrbAsterism big library\n" +
+                                                               ("  x = 1\n" * 6000) + "end\n",
             "lib/gems/picoruby-fmrb-asterism/src/asterism.c" => "/* C: out of scope */ FmrbAsterism\n",
             "flash/usr/share/doc/chat.md" => "# Chat\nFmrbAsterism guide\n",
             "doc/reference/screen_helpers.md" => "# helpers\n",

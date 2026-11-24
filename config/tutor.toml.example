@@ -58,7 +58,7 @@ branch = "develop"                 # fmruby-core's ref for a firmware version wi
 asterism_branch = "main"
 search = ["sig/**/*", "flash/app/**/*", "lib/gems/*/mrblib/**/*", "flash/usr/share/doc/**/*", "doc/reference/**/*"]
 exclude = ["flash/app/test/**/*", "flash/app/game/mahjong/**/*"]
-rb_max_kb = 32                     # a bigger .rb is left out of search
+rb_max_kb = 32                     # a bigger .rb in flash/app/ is left out of search
 refresh_hours = 24
 git_timeout_s = 300
 
