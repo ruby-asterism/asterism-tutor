@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.2
+
+- The check for iterators without a block (the device has no Enumerator) no longer flags
+  `each` with arguments: `conn.each("*/talk_board/board")` (Asterism::Connection#each,
+  which returns an Array) was reported as a pitfall and made the LLM answer again. A call
+  with arguments is flagged only for the iterators that take them (`upto`, `downto`, `step`,
+  `each_with_object`, `with_index`, `each_line`).
+
 ## 0.3.1
 
 - `search_source` reads its pattern as a regular expression first and, when it is not a valid
