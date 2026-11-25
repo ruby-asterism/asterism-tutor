@@ -4,7 +4,7 @@ require "rake/testtask"
 # that is neither the sim's (7447) nor the regression tools' (174xx).
 ROUTER_NAME = ENV.fetch("TUTOR_ROUTER_NAME", "asterism_tutor_zenohd")
 ROUTER_PORT = Integer(ENV.fetch("TUTOR_ROUTER_PORT", "17520"))
-ROUTER_IMAGE = "eclipse/zenoh:1.10.1"
+ROUTER_IMAGE = "eclipse/zenoh:1.10.2"
 
 def router_running?
   `docker ps --filter name=^/#{ROUTER_NAME}$ --format '{{.Names}}'`.strip == ROUTER_NAME
