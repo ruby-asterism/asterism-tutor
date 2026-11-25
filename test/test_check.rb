@@ -227,6 +227,27 @@ class TestCheck < Minitest::Test
     refute_includes ids, "range_step" # step with a block is fine
   end
 
+  def test_pico_each_with_arguments_is_not_the_builtin_iterator
+    src = <<~RB
+      class A < FmrbApp
+        def link_up(link)
+          @list = link.conn.each("*/talk_board/board")
+          @all = link.conn.each(@pattern)
+        end
+      end
+    RB
+    assert_empty C.pico(src, bundle_checks).select { _1["id"] == "enumerator_next" }
+    bad = <<~RB
+      class A < FmrbApp
+        def on_create
+          @e = [1, 2].each
+          @u = 1.upto(3)
+        end
+      end
+    RB
+    assert_equal 2, C.pico(bad, bundle_checks).count { _1["id"] == "enumerator_next" }
+  end
+
   def test_pico_skips_own_methods_and_plain_code
     src = <<~RB
       class A < FmrbApp

@@ -37,6 +37,12 @@ module Tutor
       found.uniq { [_1["line"], _1["id"], _1["found"]] }
     end
 
+    # The built-in iterators that take arguments. The others (each, map,
+    # times ...) take none, so a call with arguments and no block is some
+    # other method of that name -- Asterism::Connection#each(pattern)
+    # returns an Array -- and is left alone.
+    NOBLOCK_WITH_ARGS = %w[upto downto step each_with_object with_index each_line].freeze
+
     def match(n, c, own)
       kind = n.class.name.split("::").last
       return kind if c["nodes"]&.include?(kind)
@@ -48,7 +54,10 @@ module Tutor
         name = n.name.to_s
         return ".#{name}" if n.receiver && c["calls"]&.include?(name)
         return name if n.receiver.nil? && c["calls0"]&.include?(name)
-        return ".#{name} without a block" if n.receiver && n.block.nil? && c["calls_noblock"]&.include?(name)
+        if n.receiver && n.block.nil? && c["calls_noblock"]&.include?(name) &&
+           (n.arguments.nil? || NOBLOCK_WITH_ARGS.include?(name))
+          return ".#{name} without a block"
+        end
       end
       if c["endless_range"] && n.is_a?(Prism::RangeNode) && n.right.nil?
         return "endless range"
